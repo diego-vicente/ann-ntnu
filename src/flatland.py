@@ -24,15 +24,9 @@ class Flatland():
     Public variables:
     rows -- number of rows in the board
     columns -- number of columns in the board
-    board -- board itself, as a 2D list of chars.
+    board -- board itself, as a 2D list of chars
     agent_x -- x coordinate of the agent in that moment
     agent_y -- y coordinate of the agent in that moment
-
-    Public methods:
-    to_string() -- returns a string representation of the board
-    get_cell(x, y) -- returns the value of the cell (x, y)
-    move_agent(x, y) -- moves the agent to the cell (x, y) and returns the
-    reward
     """
 
     # Dictionary storing the reinforcements of each cell. Should not be edited.
