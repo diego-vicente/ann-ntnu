@@ -2,6 +2,12 @@ import random
 
 
 class Flatland():
+    reinforcements = {
+        '.': 0,
+        'F': 4,
+        'P': -1,
+        'W': -100
+    }
 
     def __init__(self, rows, columns):
         '''
@@ -20,17 +26,20 @@ class Flatland():
             for _ in range(columns):
                 # Rules for distribution are stated in the assignment
                 if (random.randint(0, 1)):
-                    value = 'F'
+                    cell = 'F'
                 elif (random.randint(0, 1)):
-                    value = 'P'
+                    cell = 'P'
                 else:
                     if not agent_placed and random.randint(0, 15) == 0:
-                        value = 'A'
+                        self.agent_x = len(row)
+                        self.agent_y = self.board.index(row)
+                        agent_placed = True
+                        cell = 'A'
                     else:
-                        value = '.'
-                row.append(value)
+                        cell = '.'
+                row.append(cell)
 
-    def toString(self):
+    def to_string(self):
         '''
         Returns a String representation of the Flatland environment
         :return: String with the Flatland matrix
@@ -51,10 +60,33 @@ class Flatland():
         else:
             return 'W'
 
+    def move_agent(self, x, y):
+        '''
+        Moves the agent to a new cell and returns the value of the destination
+        cell chosen.
+        :param x: coordinate x of the destination cell
+        :param y: coordinate y of the destination cell
+        :return: Value of the destination cell
+        '''
+        value = self.reinforcements[self.get_cell(x, y)]
+        self.board[self.agent_x][self.agent_y] = '.'
+        self.agent_x = x
+        self.agent_y = y
+        self.board[self.agent_x][self.agent_y] = 'A'
+        return value
+
 
 def main():
     test = Flatland(10, 10)
-    print(test.toString())
+    print()
+    print(test.to_string())
+    print()
+    print(test.agent_x, test.agent_y)
+    print()
+    value = test.move_agent(3, 3)
+    print('When moving to a new cell we got ', value)
+    print()
+    print(test.to_string())
 
 
 if __name__ == "__main__":
