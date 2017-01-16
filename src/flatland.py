@@ -67,7 +67,7 @@ class Flatland():
                     cell = 'P'
                     self.poison.append((len(row), self.board.index(row)))
                 else:
-                    if not agent_placed and random.randint(0, 15) == 0:
+                    if not agent_placed and random.randint(0, 5) == 0:
                         # Add the agent to the board
                         self.agent_x = len(row)
                         self.agent_y = self.board.index(row)
