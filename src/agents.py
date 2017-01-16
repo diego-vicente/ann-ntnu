@@ -43,15 +43,27 @@ class Agent():
         the visualization of steps taken by the agent. All the images are saved
         to the snapshots folder.
         """
-        plt.figure()
+        # It's easier to hardcode the border walls since the env will always be
+        # 10 x 10
+        walls = [(-1, -1), (-1, 0), (-1, 1), (-1, 2), (-1, 3), (-1, 4),
+                 (-1, 5), (-1, 6), (-1, 7), (-1, 8), (-1, 9), (-1, 10),
+                 (10, -1), (10, 0), (10, 1), (10, 2), (10, 3), (10, 4),
+                 (10, 5), (10, 6), (10, 7), (10, 8), (10, 9), (10, 10),
+                 (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), (5, -1),
+                 (6, -1), (7, -1), (8, -1), (9, -1), (0, 10), (1, 10),
+                 (2, 10), (3, 10), (4, 10), (5, 10), (6, 10), (7, 10),
+                 (8, 10), (9, 10)]
+
+        plt.figure(frameon=False, figsize=(8, 8), dpi=80)
         plt.scatter(*zip(*self.environment.food), color='green', s=20)
+        plt.scatter(*zip(*walls), color='grey', s=20)
         plt.scatter(*zip(*self.environment.poison), color='red', s=20)
         plt.scatter(*zip(*[self.position]), color='yellow', edgecolor='black',
                     s=20)
         plt.gca().invert_yaxis()
         plt.gca().set_aspect('equal', adjustable='datalim')
         plt.axis('off')
-        plt.savefig('../snapshots/test.png')
+        plt.savefig('../snapshots/test.png', bbox_inches='tight')
         plt.clf
 
 
