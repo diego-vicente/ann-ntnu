@@ -44,13 +44,14 @@ class Agent():
         to the snapshots folder.
         """
         plt.figure()
-        plt.scatter(*zip(*self.environment.food), color='green', s=10)
-        plt.scatter(*zip(*self.environment.poison), color='red', s=10)
-        plt.scatter(*zip(*[self.position]), color='yellow', s=10)
+        plt.scatter(*zip(*self.environment.food), color='green', s=20)
+        plt.scatter(*zip(*self.environment.poison), color='red', s=20)
+        plt.scatter(*zip(*[self.position]), color='yellow', edgecolor='black',
+                    s=20)
         plt.gca().invert_yaxis()
         plt.gca().set_aspect('equal', adjustable='datalim')
         plt.axis('off')
-        plt.savefig('test.png')
+        plt.savefig('../snapshots/test.png')
         plt.clf
 
 
