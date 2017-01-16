@@ -27,6 +27,10 @@ class Flatland():
     board -- board itself, as a 2D list of chars
     agent_x -- x coordinate of the agent in that moment
     agent_y -- y coordinate of the agent in that moment
+    food -- list of food coordinates
+    poison -- list of poison coordinates
+    eaten_food -- list of already eaten food positions
+    eaten_poison -- list of already poison food positions
     """
 
     # Dictionary storing the reinforcements of each cell. Should not be edited.
@@ -34,7 +38,8 @@ class Flatland():
         '.': 0,
         'F': 4,
         'P': -1,
-        'W': -100
+        'W': -100,
+        'A': 0
     }
 
     def __init__(self, rows, columns):
@@ -42,6 +47,10 @@ class Flatland():
         self.rows = rows
         self.columns = columns
         self.board = [[] for i in range(rows)]
+        self.food = []
+        self.poison = []
+        self.eaten_food = []
+        self.eaten_poison = []
 
         agent_placed = False
 
@@ -50,16 +59,22 @@ class Flatland():
             for _ in range(columns):
                 # Rules for distribution as stated in the assignment
                 if (random.randint(0, 1)):
+                    # Add food to the board
                     cell = 'F'
+                    self.food.append((len(row), self.board.index(row)))
                 elif (random.randint(0, 1)):
+                    # Add poison to the board
                     cell = 'P'
+                    self.poison.append((len(row), self.board.index(row)))
                 else:
                     if not agent_placed and random.randint(0, 15) == 0:
+                        # Add the agent to the board
                         self.agent_x = len(row)
                         self.agent_y = self.board.index(row)
                         agent_placed = True
                         cell = 'A'
                     else:
+                        # Add an empty cell
                         cell = '.'
                 row.append(cell)
 
@@ -88,6 +103,12 @@ class Flatland():
         reinforcement of the action just taken.
         """
         value = self._reinforcements[self.get_cell(x, y)]
+        if value == 4:
+            self.food.remove(x, y)
+            self.eaten_food.append(x, y)
+        elif value == -1:
+            self.poison.remove(x, y)
+            self.eaten_food.append(x, y)
         self.board[self.agent_x][self.agent_y] = '.'
         self.agent_x = x
         self.agent_y = y

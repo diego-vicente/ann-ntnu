@@ -1,5 +1,6 @@
-# from flatland import Flatland
-import matplotlib as plt
+from flatland import Flatland
+import matplotlib.pyplot as plt
+
 
 class Agent():
 
@@ -34,3 +35,32 @@ class Agent():
         # Check if the agent just ran into a wall
         end = mov_reward == -100
         return end
+
+    def visualize_steps(self):
+        """Save a graphic representation of the steps taken by the agent.
+
+        Save a file with the visualization of the steps taken by the agent to
+        the visualization of steps taken by the agent. All the images are saved
+        to the snapshots folder.
+        """
+        plt.figure()
+        plt.scatter(*zip(*self.environment.food), color='green', s=10)
+        plt.scatter(*zip(*self.environment.poison), color='red', s=10)
+        plt.scatter(*zip(*[self.position]), color='yellow', s=10)
+        plt.gca().invert_yaxis()
+        plt.gca().set_aspect('equal', adjustable='datalim')
+        plt.axis('off')
+        plt.savefig('test.png')
+        plt.clf
+
+
+def test():
+    agent = Agent()
+    env = Flatland(10, 10)
+    agent.new_environment(env)
+    print(agent.environment.to_string())
+    agent.visualize_steps()
+
+
+if __name__ == "__main__":
+    test()
