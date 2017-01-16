@@ -36,8 +36,8 @@ class Flatland():
     # Dictionary storing the reinforcements of each cell. Should not be edited.
     _reinforcements = {
         '.': 0,
-        'F': 4,
-        'P': -1,
+        'F': 1,
+        'P': -4,
         'W': -100,
         'A': 0
     }
@@ -103,10 +103,10 @@ class Flatland():
         reinforcement of the action just taken.
         """
         value = self._reinforcements[self.get_cell(x, y)]
-        if value == 4:
+        if value == 1:
             self.food.remove(x, y)
             self.eaten_food.append(x, y)
-        elif value == -1:
+        elif value == -4:
             self.poison.remove(x, y)
             self.eaten_food.append(x, y)
         self.board[self.agent_x][self.agent_y] = '.'
