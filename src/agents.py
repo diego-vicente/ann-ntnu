@@ -127,6 +127,40 @@ class Agent():
         plt.clf
 
 
+class GreedyAgent(Agent):
+
+    def __init__(self):
+        Agent.__init__(self)
+
+    def next_movement(self):
+        """Follow a greedy policy based on classic rules to choose next step"""
+        # See the options
+        left, front, right = self.look_around()
+        options = [left[0], front[0], right[0]]
+        choices = [left[1], front[1], right[1]]
+
+        # If there is any food, go for it:
+        if 'F' in options:
+            return choices[options.index('F')]
+        # If there is no food, just go for an empty cell
+        elif '.' in options:
+            return choices[options.index('.')]
+        # If there is no other way...
+        #
+        # Drain the pressure from the swelling,
+        # The sensation's overwhelming,
+        # Give me a long kiss goodnight
+        # and everything will be alright
+        # Tell me that I won't feel a thing
+        # So give me Novacaine.
+        elif 'P' in options:
+            return choices[options.index('P')]
+
+        # And well, this should never happen, but for the sake of completeness
+        else:
+            return choices[options.index('W')]
+
+
 def test():
     agent = Agent()
     env = Flatland(10, 10)
