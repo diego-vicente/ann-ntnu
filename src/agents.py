@@ -128,12 +128,13 @@ class Agent():
 
 
 class GreedyAgent(Agent):
+    """Agent that follows greedily a policy based on classic rules"""
 
     def __init__(self):
         Agent.__init__(self)
 
     def next_movement(self):
-        """Follow a greedy policy based on classic rules to choose next step"""
+        """Follow the greedy policy to choose next step"""
         # See the options
         left, front, right = self.look_around()
         options = [left[0], front[0], right[0]]
