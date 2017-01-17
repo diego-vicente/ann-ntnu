@@ -4,7 +4,12 @@ import pygame
 import sys
 
 
-class Window():
+class Simulation():
+    """A visual representation of the path taken by an Agent in a Flatland
+
+    A Simulation generates a pygame screen in which the Flatland environment is
+    rendered, along with the solution of an agent in it.
+    """
     # Colors defined for convinience
     _black = (0, 0, 0)
     _white = (255, 255, 255)
@@ -18,6 +23,7 @@ class Window():
     _cell_size = 40
 
     def __init__(self, agent, env):
+        """Creates a new Simulation given an agent and a Flatland environment"""
         self.agent = agent
         self.env = env
         # Compute window size
@@ -34,7 +40,8 @@ class Window():
                 self._grid[i, j] = (int(self._grid[i, j][0]),
                                     int(self._grid[i, j][1]))
 
-    def start_simulation(self):
+    def start(self):
+        """Starts the simulation loop"""
         # Create the screen
         self.screen = pygame.display.set_mode((self.height, self.width))
         # Call the draw function to start
@@ -47,7 +54,7 @@ class Window():
                     sys.exit()
 
     def _draw_window(self):
-
+        """Draws all the components in the window at a given time"""
         # Draw a white background
         self.screen.fill(self._white)
 
@@ -84,14 +91,15 @@ class Window():
                     pygame.draw.circle(self.screen, self._agent,
                                        self._grid[i, j], 10, 0)
 
+        # Refresh the window once all the changes are done
         pygame.display.update()
 
 
 def main():
     agent = Agent()
     env = Flatland(10, 10)
-    window = Window(agent, env)
-    window.start_simulation()
+    simulation = Simulation(agent, env)
+    simulation.start()
 
 
 if __name__ == "__main__":
