@@ -23,7 +23,7 @@ class Simulation():
     _cell_size = 40
 
     def __init__(self, agent, env):
-        """Creates a new Simulation given an agent and a Flatland environment"""
+        """Creates a new Simulation given an agent and a environment"""
         self.agent = agent
         self.env = env
         # Compute window size

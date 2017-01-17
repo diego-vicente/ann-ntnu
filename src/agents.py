@@ -2,13 +2,36 @@ from flatland import Flatland
 import matplotlib.pyplot as plt
 
 
+class Direction():
+    """Represents North, East, South and West in tuples for coordinates"""
+    N = (0, 1)
+    E = (1, 0)
+    S = (0, -1)
+    W = (-1, 0)
+
+
 class Agent():
+    """Superclass for different agents implemented
+
+    This superclass provides all the common functions that the agents need when
+    moving around the environment. Every other agent should inherit this class
+    and add the decision-making logic or other perception skills.
+
+    Public Attributes:
+    environment -- Flatland in which the agent will move
+    position -- current position of the agent in the environment
+    reward -- current reward of the agent in the environment
+    steps -- lists of positions that agent has traveled in the environment
+    facing -- current Direction that the agent is facing
+
+    """
 
     def __init__(self):
         self.environment = None
         self.position = None
         self.reward = 0
         self.steps = []
+        self.facing = Direction.N
 
     def new_environment(self, new_env):
         """Sets a new Flatland environment for the agent"""
@@ -21,7 +44,7 @@ class Agent():
         # Clear the rewards from the previous solution
         self.reward = 0
 
-    def move_to(self, x, y):
+    def move_to(self, direction):
         """Moves the agent to the cell (x,y) in its actual environment
 
         The method updates the agent's environment according to the movement,
@@ -29,12 +52,49 @@ class Agent():
         is over because of the agent running into a wall.
         """
         # Update the position of the agent in the environment
+        x = self.position[0] + direction[0]
+        y = self.position[1] + direction[1]
         mov_reward = self.environment.move_agent(x, y)
-        # Update the rewards value
+        # Update the rewards, position and direction value
         self.reward += mov_reward
+        self.position = (x, y)
+        self.facing = direction
         # Check if the agent just ran into a wall
         end = mov_reward == -100
         return end
+
+    def look_at(self, direction):
+        """Return the value of the cell in a given direction"""
+        return self.environment.get_cell((self.position[0] + direction[0],
+                                          self.position[1] + direction[1]))
+
+    def look_around(self):
+        """Returns the values of the left, front and right cells
+
+        This method implements the basic perception of an agent. Returns a
+        triple with the values of each cell (left, front and right in that
+        order) and the direction associated to each of the cells.
+        """
+
+        front = self.facing
+        if (front == Direction.N):
+            left = Direction.W
+            right = Direction.E
+        elif (front == Direction.E):
+            left = Direction.N
+            right = Direction.S
+        elif (front == Direction.S):
+            left = Direction.E
+            right = Direction.W
+        elif (front == Direction.W):
+            left = Direction.S
+            right = Direction.N
+
+        surroundings = ((left, self.look_at(left)),
+                        (front, self.look_at(front)),
+                        (right, self.look_at(right)))
+
+        return surroundings
 
     def visualize_steps(self):
         """Save a graphic representation of the steps taken by the agent.
