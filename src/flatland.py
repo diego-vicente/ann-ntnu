@@ -23,7 +23,7 @@ class Flatland():
 
     Public variables:
     rows -- number of rows in the board
-    columns -- number of columns in the board
+    cols -- number of columns in the board
     board -- board itself, as a 2D list of chars
     agent_x -- x coordinate of the agent in that moment
     agent_y -- y coordinate of the agent in that moment
@@ -42,10 +42,10 @@ class Flatland():
         'A': 0
     }
 
-    def __init__(self, rows, columns):
+    def __init__(self, rows, cols):
         """Creates a new random Flatland representation of a given size."""
         self.rows = rows
-        self.columns = columns
+        self.cols = cols
         self.board = [[] for i in range(rows)]
         self.food = []
         self.poison = []
@@ -56,7 +56,7 @@ class Flatland():
 
         # Possible value of the cells: empty (.), food (F), poison (P)
         for row in self.board:
-            for _ in range(columns):
+            for _ in range(cols):
                 # Rules for distribution as stated in the assignment
                 if (random.randint(0, 1)):
                     # Add food to the board
@@ -89,7 +89,7 @@ class Flatland():
         the possible values of a cell. Since walls are not part of the board
         list when out of bounds, it is always recommended to use this method.
         """
-        if (0 <= x < self.columns and 0 <= y < self.rows):
+        if (0 <= x < self.cols and 0 <= y < self.rows):
             return self.board[x][y]
         else:
             return 'W'

@@ -73,6 +73,7 @@ def test():
     agent.new_environment(env)
     print(agent.environment.to_string())
     agent.visualize_steps()
+    agent.visualize_board()
 
 
 if __name__ == "__main__":
