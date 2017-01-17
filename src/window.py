@@ -8,6 +8,10 @@ class Window():
     # Colors defined for convinience
     _black = (0, 0, 0)
     _white = (255, 255, 255)
+    _food = (0, 127, 0)
+    _poison = (255, 0, 0)
+    _agent = (230, 230, 0)
+    _wall = (200, 200, 200)
 
     # Coordinates and other parameters of size
     _grid_o = (20, 20)
@@ -66,8 +70,19 @@ class Window():
         # Draw each element in the grid
         for i in range(-1, self.env.rows + 1):
             for j in range(-1, self.env.cols + 1):
-                pygame.draw.circle(self.screen, self._black, self._grid[i, j],
-                                   10, 3)
+                cell = self.env.get_cell(i, j)
+                if (cell == 'W'):
+                    pygame.draw.circle(self.screen, self._wall,
+                                       self._grid[i, j], 10, 0)
+                elif (cell == 'F'):
+                    pygame.draw.circle(self.screen, self._food,
+                                       self._grid[i, j], 10, 0)
+                elif (cell == 'P'):
+                    pygame.draw.circle(self.screen, self._poison,
+                                       self._grid[i, j], 10, 0)
+                elif (cell == 'A'):
+                    pygame.draw.circle(self.screen, self._agent,
+                                       self._grid[i, j], 10, 0)
 
         pygame.display.update()
 
