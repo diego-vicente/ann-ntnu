@@ -65,8 +65,8 @@ class Agent():
 
     def look_at(self, direction):
         """Return the value of the cell in a given direction"""
-        return self.environment.get_cell((self.position[0] + direction[0],
-                                          self.position[1] + direction[1]))
+        return self.environment.get_cell(self.position[0] + direction[0],
+                                         self.position[1] + direction[1])
 
     def look_around(self):
         """Returns the values of the left, front and right cells
@@ -137,8 +137,8 @@ class GreedyAgent(Agent):
         """Follow the greedy policy to choose next step"""
         # See the options
         left, front, right = self.look_around()
-        options = [left[0], front[0], right[0]]
-        choices = [left[1], front[1], right[1]]
+        choices = [left[0], front[0], right[0]]
+        options = [left[1], front[1], right[1]]
 
         # If there is any food, go for it:
         if 'F' in options:
@@ -161,14 +161,54 @@ class GreedyAgent(Agent):
         else:
             return choices[options.index('W')]
 
+    def run(self, iterations, output):
+        """Run a complete simulation of a given number of steps
+
+        Arguments:
+        iterations -- number of iterations to perform
+        output -- True if output is desired, false if not
+        """
+        # Define a dictionary of directions to strings
+        dirs = {Direction.N: 'North',
+                Direction.E: 'East',
+                Direction.S: 'South',
+                Direction.W: 'West'}
+
+        # Greedy policy is deterministic so there is no point in running more
+        # than once.
+        if self.steps != []:
+            print('Solution already exists in this agent')
+            return self.reward
+
+        # Display initial board
+        if output:
+            print('The initial board is:\n')
+            print(self.environment.to_string)
+
+        # Execution loop
+        for i in range(iterations):
+            direction = self.next_movement()
+            end = self.move_to(direction)
+            if output:
+                print('Iteration {}: {}, {}'.format(i, dirs[direction],
+                                                    self.reward))
+            if end:
+                return self.reward
+
+        if output:
+            print('End of solution, final reward: {}\n'.format(self.reward))
+            print(self.environment.to_string())
+        return self.reward
+
 
 def test():
-    agent = Agent()
+    agent = GreedyAgent()
     env = Flatland(10, 10)
     agent.new_environment(env)
-    print(agent.environment.to_string())
-    agent.visualize_steps()
-    agent.visualize_board()
+    agent.run(50, True)
+    # print(agent.environment.to_string())
+    # agent.visualize_steps()
+    # agent.visualize_board()
 
 
 if __name__ == "__main__":

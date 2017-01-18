@@ -103,12 +103,12 @@ class Flatland():
         reinforcement of the action just taken.
         """
         value = self._reinforcements[self.get_cell(x, y)]
-        if value == 1:
-            self.food.remove(x, y)
-            self.eaten_food.append(x, y)
-        elif value == -4:
-            self.poison.remove(x, y)
-            self.eaten_food.append(x, y)
+        # if value == 1:
+        #     self.food.remove((x, y))
+        #     self.eaten_food.append((x, y))
+        # elif value == -4:
+        #     self.poison.remove((x, y))
+        #     self.eaten_food.append((x, y))
         self.board[self.agent_x][self.agent_y] = '.'
         self.agent_x = x
         self.agent_y = y
