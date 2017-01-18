@@ -1,5 +1,5 @@
 from flatland import Flatland
-from agents import Agent
+from agents import GreedyAgent
 import pygame
 import sys
 
@@ -22,10 +22,10 @@ class Simulation():
     _grid_o = (20, 20)
     _cell_size = 40
 
-    def __init__(self, agent, env):
+    def __init__(self, agent):
         """Creates a new Simulation given an agent and a environment"""
         self.agent = agent
-        self.env = env
+        self.env = agent.environment
         # Compute window size
         self.height = (self.env.rows + 2) * self._cell_size + 2*self._grid_o[1]
         self.width = (self.env.cols + 2) * self._cell_size + 2*self._grid_o[0]
@@ -52,6 +52,10 @@ class Simulation():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+    def _points_to_coordinates(self, points):
+        """Translate a list of points to coordinates in Simulation canvas"""
+        return [self._grid[point] for point in points]
 
     def _draw_window(self):
         """Draws all the components in the window at a given time"""
@@ -91,14 +95,19 @@ class Simulation():
                     pygame.draw.circle(self.screen, self._agent,
                                        self._grid[i, j], 10, 0)
 
+        trace = self._points_to_coordinates(self.agent.steps)
+        pygame.draw.lines(self.screen, self._agent, False, trace, 5)
+
         # Refresh the window once all the changes are done
         pygame.display.update()
 
 
 def main():
-    agent = Agent()
+    agent = GreedyAgent()
     env = Flatland(10, 10)
-    simulation = Simulation(agent, env)
+    agent.new_environment(env)
+    simulation = Simulation(agent)
+    simulation.agent.run(50, True)
     simulation.start()
 
 
