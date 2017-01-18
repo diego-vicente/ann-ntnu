@@ -90,8 +90,8 @@ class Agent():
             left = Direction.S
             right = Direction.N
 
-        surroundings = ((left, self.look_at(left)),
-                        (front, self.look_at(front)),
+        surroundings = ((front, self.look_at(front)),
+                        (left, self.look_at(left)),
                         (right, self.look_at(right)))
 
         return surroundings
@@ -137,8 +137,8 @@ class GreedyAgent(Agent):
         """Follow the greedy policy to choose next step"""
         # See the options
         left, front, right = self.look_around()
-        choices = [left[0], front[0], right[0]]
-        options = [left[1], front[1], right[1]]
+        choices = [front[0], left[0], right[0]]
+        options = [front[1], left[1], right[1]]
 
         # If there is any food, go for it:
         if 'F' in options:
