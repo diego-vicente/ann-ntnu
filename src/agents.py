@@ -61,7 +61,7 @@ class Agent():
         self.facing = direction
         # Check if the agent just ran into a wall
         end = mov_reward == -100
-        return end
+        return (x, y), end
 
     def look_at(self, direction):
         """Return the value of the cell in a given direction"""
@@ -183,12 +183,14 @@ class GreedyAgent(Agent):
         # Display initial board
         if output:
             print('The initial board is:\n')
-            print(self.environment.to_string)
+            print(self.environment.to_string())
 
         # Execution loop
         for i in range(iterations):
             direction = self.next_movement()
-            end = self.move_to(direction)
+            pos, end = self.move_to(direction)
+            self.position = pos
+            self.steps.append(pos)
             if output:
                 print('Iteration {}: {}, {}'.format(i, dirs[direction],
                                                     self.reward))
