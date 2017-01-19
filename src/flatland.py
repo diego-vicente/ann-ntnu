@@ -90,7 +90,7 @@ class Flatland():
         list when out of bounds, it is always recommended to use this method.
         """
         if (0 <= x < self.cols and 0 <= y < self.rows):
-            return self.board[x][y]
+            return self.board[y][x]
         else:
             return 'W'
 
@@ -109,8 +109,8 @@ class Flatland():
         # elif value == -4:
         #     self.poison.remove((x, y))
         #     self.eaten_food.append((x, y))
-        self.board[self.agent_x][self.agent_y] = '.'
+        self.board[self.agent_y][self.agent_x] = '.'
         self.agent_x = x
         self.agent_y = y
-        self.board[self.agent_x][self.agent_y] = 'A'
+        self.board[self.agent_y][self.agent_x] = 'A'
         return value

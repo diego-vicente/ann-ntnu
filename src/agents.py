@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 
 class Direction():
     """Represents North, East, South and West in tuples for coordinates"""
-    N = (0, 1)
+    N = (0, -1)
     E = (1, 0)
-    S = (0, -1)
+    S = (0, 1)
     W = (-1, 0)
 
 
@@ -94,6 +94,9 @@ class Agent():
                         (left, self.look_at(left)),
                         (right, self.look_at(right)))
 
+        print('I see {} in front, {} left, and {} right.'.format(
+            surroundings[0][1], surroundings[1][1], surroundings[2][1]))
+
         return surroundings
 
     def visualize_steps(self):
@@ -136,7 +139,7 @@ class GreedyAgent(Agent):
     def next_movement(self):
         """Follow the greedy policy to choose next step"""
         # See the options
-        left, front, right = self.look_around()
+        front, left, right = self.look_around()
         choices = [front[0], left[0], right[0]]
         options = [front[1], left[1], right[1]]
 
@@ -179,11 +182,14 @@ class GreedyAgent(Agent):
         if self.steps != []:
             print('Solution already exists in this agent')
             return self.reward
+        else:
+            self.steps.append(self.position)
 
         # Display initial board
         if output:
             print('The initial board is:\n')
             print(self.environment.to_string())
+            print()
 
         # Execution loop
         for i in range(iterations):
@@ -207,6 +213,7 @@ def test():
     agent = GreedyAgent()
     env = Flatland(10, 10)
     agent.new_environment(env)
+    print(agent.position)
     agent.run(50, True)
     # print(agent.environment.to_string())
     # agent.visualize_steps()

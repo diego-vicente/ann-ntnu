@@ -34,8 +34,8 @@ class Simulation():
         for i in range(-1, self.env.rows + 1):
             for j in range(-1, self.env.cols + 1):
                 # Compute the corner of the cell
-                self._grid[i, j] = (self._grid_o[0] + (j+1.5)*self._cell_size,
-                                    self._grid_o[1] + (i+1.5)*self._cell_size)
+                self._grid[i, j] = (self._grid_o[0] + (i+1.5)*self._cell_size,
+                                    self._grid_o[1] + (j+1.5)*self._cell_size)
                 # Round to int
                 self._grid[i, j] = (int(self._grid[i, j][0]),
                                     int(self._grid[i, j][1]))
