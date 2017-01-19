@@ -14,7 +14,9 @@ class Simulation():
     _black = (0, 0, 0)
     _white = (255, 255, 255)
     _food = (0, 127, 0)
+    _eaten_food = (180, 220, 180)
     _poison = (255, 0, 0)
+    _eaten_poison = (255, 100, 100)
     _agent = (230, 230, 0)
     _wall = (200, 200, 200)
 
@@ -81,16 +83,24 @@ class Simulation():
         # Draw each element in the grid
         for i in range(-1, self.env.rows + 1):
             for j in range(-1, self.env.cols + 1):
-                cell = self.env.get_cell(i, j)
+                cell = self.env.get_original_cell(i, j)
                 if (cell == 'W'):
                     pygame.draw.circle(self.screen, self._wall,
                                        self._grid[i, j], 10, 0)
                 elif (cell == 'F'):
-                    pygame.draw.circle(self.screen, self._food,
-                                       self._grid[i, j], 10, 0)
+                    if (i, j) in self.agent.steps:
+                        pygame.draw.circle(self.screen, self._eaten_food,
+                                           self._grid[i, j], 10, 0)
+                    else:
+                        pygame.draw.circle(self.screen, self._food,
+                                           self._grid[i, j], 10, 0)
                 elif (cell == 'P'):
-                    pygame.draw.circle(self.screen, self._poison,
-                                       self._grid[i, j], 10, 0)
+                    if (i, j) in self.agent.steps:
+                        pygame.draw.circle(self.screen, self._eaten_poison,
+                                           self._grid[i, j], 10, 0)
+                    else:
+                        pygame.draw.circle(self.screen, self._poison,
+                                           self._grid[i, j], 10, 0)
                 elif (cell == 'A'):
                     pygame.draw.circle(self.screen, self._agent,
                                        self._grid[i, j], 10, 0)
@@ -106,8 +116,8 @@ def main():
     agent = GreedyAgent()
     env = Flatland(10, 10)
     agent.new_environment(env)
+    agent.run(50, True)
     simulation = Simulation(agent)
-    simulation.agent.run(50, True)
     simulation.start()
 
 

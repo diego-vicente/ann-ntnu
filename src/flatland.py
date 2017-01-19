@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 
 
 class Flatland():
@@ -78,6 +79,9 @@ class Flatland():
                         cell = '.'
                 row.append(cell)
 
+        # Store the copy of the original board
+        self.original_board = deepcopy(self.board)
+
     def to_string(self):
         """Returns a string representation of the Flatland environment."""
         return '\n'.join([' '.join(row) for row in self.board])
@@ -91,6 +95,19 @@ class Flatland():
         """
         if (0 <= x < self.cols and 0 <= y < self.rows):
             return self.board[y][x]
+        else:
+            return 'W'
+
+    def get_original_cell(self, x, y):
+        """Returns the value of the cell (x,y) in the initial board
+
+        The return value is a char ('.', 'W', 'F', 'P') representing each of
+        the possible values of a cell. Since walls are not part of the board
+        list when out of bounds, it is always recommended to use this method.
+        This method should only be used for graphic representation, not agents.
+        """
+        if (0 <= x < self.cols and 0 <= y < self.rows):
+            return self.original_board[y][x]
         else:
             return 'W'
 
