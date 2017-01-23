@@ -1,5 +1,6 @@
 from flatland import Flatland
 import matplotlib.pyplot as plt
+import random
 
 
 class Direction():
@@ -207,6 +208,14 @@ class GreedyAgent(Agent):
             print('End of solution, final reward: {}\n'.format(self.reward))
             print(self.environment.to_string())
         return self.reward
+
+
+class SupervisedAgent(Agent):
+
+    def __init__(self):
+        Agent.__init__(self)
+        self.neurons = [0 for _ in range(12)]
+        self.weights = [random.uniform(0, 0.001) for _ in range(36)]
 
 
 def test():
