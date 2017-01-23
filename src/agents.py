@@ -1,6 +1,7 @@
 from flatland import Flatland
-import matplotlib.pyplot as plt
+from operator import itemgetter
 import random
+import math
 
 
 class Direction():
@@ -128,6 +129,13 @@ class Agent():
         else:
             return choices[options.index('W')]
 
+
+class GreedyAgent(Agent):
+    """Agent that follows greedily a policy based on classic rules"""
+
+    def __init__(self):
+        Agent.__init__(self)
+
     def run(self, iterations, output):
         """Run a complete simulation of a given number of steps
 
@@ -157,7 +165,7 @@ class Agent():
 
         # Execution loop
         for i in range(iterations):
-            direction = self.next_movement()
+            direction = self.policy_movement()
             pos, end = self.move_to(direction)
             self.position = pos
             self.steps.append(pos)
@@ -175,18 +183,68 @@ class Agent():
 
 class SupervisedAgent(Agent):
 
-    def __init__(self):
+    def __init__(self, learning_rate):
         Agent.__init__(self)
+        self.learning_rate = learning_rate
         self.neurons = [0 for _ in range(12)]
         self.weights = [random.uniform(0, 0.001) for _ in range(36)]
 
+    def train(self):
+        """Updates the neurons taking into account the surroundings
+
+        The neuron array consists of 12 neurons, 4 neurons per cell (front,
+        left, right) that can represent the 4 different values of that given
+        cell. This method updates the neuron array according to the agent's
+        board at a given point.
+        """
+        # Find all combinations of directions and possible values
+        surroundings = self.look_around()
+        pairs = [(x[1], y) for x in surroundings for y in ['.', 'W', 'F', 'P']]
+        directions = [x[0] for x in surroundings]
+        print(pairs)
+
+        # Fill the neuron array by comparing each of the values generated
+        for i in range(len(pairs)):
+            direction, value = pairs[i]
+            self.neurons[i] = 1 if (direction == value) else 0
+
+        print(self.neurons)
+
+        # Compute weights and choose the next movement
+        self.outputs = [(0, direction) for direction in directions]
+        for i in range(3):
+            inputs = [w * n for (w, n) in zip(self.weights[i:(i+11)],
+                                              self.neurons)]
+            self.outputs[i][0] = sum(inputs)
+
+        # Make a choice based on the input obtained
+        getvalue = itemgetter(0)
+        choice = max(self.outputs, key=getvalue)[1]
+
+        # Learn from the last step taken
+        policy = self.policy_movement()
+        correct = 1 if (policy == choice) else 0
+        # Compute exponential part of delta_i
+        output_values = list(map(getvalue, self.outputs))
+        sum_exp = sum([math.exp(n) for n in output_values])
+        # Update each of the weights
+        for weight in self.weights:
+            # Compute input and output values of the weight
+            input_n = self.neurons[self.weights.index(weight) % 12]
+            output_n = self.outputs[self.weights.index(weight) // 12]
+            # Update the value using delta formula
+            delta = - (math.exp(output_n) / sum_exp) + correct
+            weight += self.learning_rate * input_n * delta
+
+        # Return the final action
+        return choice
+
 
 def test():
-    agent = GreedyAgent()
+    agent = SupervisedAgent()
     env = Flatland(10, 10)
     agent.new_environment(env)
-    print(agent.position)
-    agent.run(50, True)
+    agent.think()
     # print(agent.environment.to_string())
     # agent.visualize_steps()
     # agent.visualize_board()
