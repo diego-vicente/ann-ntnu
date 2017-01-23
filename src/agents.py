@@ -94,8 +94,8 @@ class Agent():
                         (left, self.look_at(left)),
                         (right, self.look_at(right)))
 
-        print('I see {} in front, {} left, and {} right.'.format(
-            surroundings[0][1], surroundings[1][1], surroundings[2][1]))
+        # print('I see {} in front, {} left, and {} right.'.format(
+        #     surroundings[0][1], surroundings[1][1], surroundings[2][1]))
 
         return surroundings
 

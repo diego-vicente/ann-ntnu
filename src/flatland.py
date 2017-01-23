@@ -71,8 +71,8 @@ class Flatland():
                 row.append(cell)
 
         # Place the agent in a random cell in the board
-        self.agent_y = random.randint(rows)
-        self.agent_x = random.randint(cols)
+        self.agent_y = random.randint(0, rows - 1)
+        self.agent_x = random.randint(0, cols - 1)
         self.board[self.agent_y][self.agent_x] = 'A'
         if (self.agent_x, self.agent_y) in self.food:
             self.food.remove((self.agent_x, self.agent_y))
