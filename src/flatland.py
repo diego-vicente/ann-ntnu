@@ -53,8 +53,6 @@ class Flatland():
         self.eaten_food = []
         self.eaten_poison = []
 
-        agent_placed = False
-
         # Possible value of the cells: empty (.), food (F), poison (P)
         for row in self.board:
             for _ in range(cols):
@@ -68,16 +66,18 @@ class Flatland():
                     cell = 'P'
                     self.poison.append((len(row), self.board.index(row)))
                 else:
-                    if not agent_placed and random.randint(0, 5) == 0:
-                        # Add the agent to the board
-                        self.agent_x = len(row)
-                        self.agent_y = self.board.index(row)
-                        agent_placed = True
-                        cell = 'A'
-                    else:
-                        # Add an empty cell
-                        cell = '.'
+                    # Add an empty cell
+                    cell = '.'
                 row.append(cell)
+
+        # Place the agent in a random cell in the board
+        self.agent_y = random.randint(rows)
+        self.agent_x = random.randint(cols)
+        self.board[self.agent_y][self.agent_x] = 'A'
+        if (self.agent_x, self.agent_y) in self.food:
+            self.food.remove((self.agent_x, self.agent_y))
+        if (self.agent_x, self.agent_y) in self.poison:
+            self.poison.remove((self.agent_x, self.agent_y))
 
         # Store the copy of the original board
         self.original_board = deepcopy(self.board)
