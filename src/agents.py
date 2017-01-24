@@ -187,9 +187,10 @@ class SupervisedAgent(Agent):
         Agent.__init__(self)
         self.learning_rate = learning_rate
         self.neurons = [0 for _ in range(12)]
-        self.weights = [random.uniform(0, 0.001) for _ in range(36)]
+        pairs = [(i, j) for i in range(3) for j in range(12)]
+        self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
 
-    def train(self):
+    def _learn_step(self):
         """Updates the neurons taking into account the surroundings
 
         The neuron array consists of 12 neurons, 4 neurons per cell (front,
@@ -201,25 +202,26 @@ class SupervisedAgent(Agent):
         surroundings = self.look_around()
         pairs = [(x[1], y) for x in surroundings for y in ['.', 'W', 'F', 'P']]
         directions = [x[0] for x in surroundings]
-        print(pairs)
+        #print(pairs)
 
         # Fill the neuron array by comparing each of the values generated
         for i in range(len(pairs)):
             direction, value = pairs[i]
             self.neurons[i] = 1 if (direction == value) else 0
 
-        print(self.neurons)
+        #print(self.neurons)
 
-        # Compute weights and choose the next movement
-        self.outputs = [(0, direction) for direction in directions]
-        for i in range(3):
-            inputs = [w * n for (w, n) in zip(self.weights[i:(i+11)],
-                                              self.neurons)]
-            self.outputs[i][0] = sum(inputs)
+        # Compute inputs
+        self.outputs = [[0, direction] for direction in directions]
+        for i in range(len(self.outputs)):
+            for j in range(len(self.neurons)):
+                self.outputs[i][0] += self.weights[(i, j)] * self.neurons[j]
+
+        #print(self.outputs)
 
         # Make a choice based on the input obtained
         getvalue = itemgetter(0)
-        choice = max(self.outputs, key=getvalue)[1]
+        max_out, choice = max(self.outputs, key=getvalue)
 
         # Learn from the last step taken
         policy = self.policy_movement()
@@ -228,23 +230,84 @@ class SupervisedAgent(Agent):
         output_values = list(map(getvalue, self.outputs))
         sum_exp = sum([math.exp(n) for n in output_values])
         # Update each of the weights
-        for weight in self.weights:
-            # Compute input and output values of the weight
-            input_n = self.neurons[self.weights.index(weight) % 12]
-            output_n = self.outputs[self.weights.index(weight) // 12]
-            # Update the value using delta formula
-            delta = - (math.exp(output_n) / sum_exp) + correct
-            weight += self.learning_rate * input_n * delta
+        #print(self.weights)
+
+        for i in range(len(self.outputs)):
+            for j in range(len(self.neurons)):
+                input_n = self.neurons[j]
+                output_n = self.outputs[i][0]
+                delta = correct - (math.exp(output_n) / sum_exp)
+                self.weights[(i, j)] += self.learning_rate * input_n * delta
 
         # Return the final action
         return choice
 
+    def learn(self, iterations, output):
+        """Run an iteration learning in each step
+
+        Arguments:
+        iterations -- number of iterations to perform
+        output -- True if output is desired, false if not
+        """
+        # Define a dictionary of directions to strings
+        dirs = {Direction.N: 'North',
+                Direction.E: 'East',
+                Direction.S: 'South',
+                Direction.W: 'West'}
+
+        self.steps.append(self.position)
+
+        # Display initial board
+        if output:
+            print('The initial board is:\n')
+            print(self.environment.to_string())
+            print()
+
+        # Execution loop
+        for i in range(iterations):
+            direction = self._learn_step()
+            pos, end = self.move_to(direction)
+            self.position = pos
+            self.steps.append(pos)
+            if output:
+                print('Iteration {}: {}, {}'.format(i, dirs[direction],
+                                                    self.reward))
+            if end:
+                return self.reward
+
+        if output:
+            print('End of solution, final reward: {}\n'.format(self.reward))
+            print(self.environment.to_string())
+        return self.reward
+
+    def train(self, episodes, output):
+        """Perform several executions in different environments to train the net
+
+        Arguments:
+        episodes -- number of episodes (100 executions) to perform
+        output -- True if output is desired, false if not
+        """
+        rewards = []
+        for i in range(episodes):
+            episode_rewards = []
+            for _ in range(100):
+                env = Flatland(10, 10)
+                self.new_environment(env)
+                episode_rewards.append(self.learn(50, output))
+            avg = sum(episode_rewards)/100
+            print('Episode {}: {}'.format(i, avg))
+            rewards.append(avg)
+
 
 def test():
-    agent = SupervisedAgent()
+    agent = SupervisedAgent(0.01)
     env = Flatland(10, 10)
+    print(agent.weights)
+    agent.train(50, False)
     agent.new_environment(env)
-    agent.think()
+    # agent._learn_step()
+    agent.learn(50, True)
+    print(agent.weights)
     # print(agent.environment.to_string())
     # agent.visualize_steps()
     # agent.visualize_board()
