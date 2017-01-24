@@ -228,17 +228,18 @@ class SupervisedAgent(Agent):
         correct = 1 if (policy == choice) else 0
         # Compute exponential part of delta_i
         output_values = list(map(getvalue, self.outputs))
-        sum_exp = sum([math.exp(n) for n in output_values])
+        sum_exp = sum([math.exp(n - max_out) for n in output_values])
         # Update each of the weights
         #print(self.weights)
 
-        for i in range(len(self.outputs)):
-            for j in range(len(self.neurons)):
-                input_n = self.neurons[j]
-                output_n = self.outputs[i][0]
-                delta = correct - (math.exp(output_n) / sum_exp)
-                self.weights[(i, j)] += self.learning_rate * input_n * delta
+        idx = output_values.index(max_out)
+        for j in range(len(self.neurons)):
+            input_n = self.neurons[j]
+            output_n = self.outputs[idx][0]
+            delta = correct - (math.exp(output_n - max_out / sum_exp))
+            self.weights[(idx, j)] += self.learning_rate * input_n * delta
 
+        #print()
         # Return the final action
         return choice
 
@@ -290,17 +291,17 @@ class SupervisedAgent(Agent):
         rewards = []
         for i in range(episodes):
             episode_rewards = []
-            for _ in range(100):
+            for _ in range(10):
                 env = Flatland(10, 10)
                 self.new_environment(env)
                 episode_rewards.append(self.learn(50, output))
-            avg = sum(episode_rewards)/100
+            avg = sum(episode_rewards)/10
             print('Episode {}: {}'.format(i, avg))
             rewards.append(avg)
 
 
 def test():
-    agent = SupervisedAgent(0.01)
+    agent = SupervisedAgent(0.05)
     env = Flatland(10, 10)
     print(agent.weights)
     agent.train(50, False)
