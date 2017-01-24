@@ -126,8 +126,10 @@ class Flatland():
         # elif value == -4:
         #     self.poison.remove((x, y))
         #     self.eaten_food.append((x, y))
-        self.board[self.agent_y][self.agent_x] = '.'
-        self.agent_x = x
-        self.agent_y = y
-        self.board[self.agent_y][self.agent_x] = 'A'
+        if not value == -100:
+            self.board[self.agent_y][self.agent_x] = '.'
+            self.agent_x = x
+            self.agent_y = y
+            self.board[self.agent_y][self.agent_x] = 'A'
+
         return value
