@@ -182,7 +182,20 @@ class GreedyAgent(Agent):
 
 
 class SupervisedAgent(Agent):
+    """Agent that implements a supervised ANN
 
+    The neuron array consists of 12 neurons, 4 neurons per cell (front, left,
+    right) that can represent the 4 different values of that given cell. There
+    is also a weights dictionary, in that stores the weight associated to each
+    of the pairs (i, j), where i is an output neuron and j is an input
+    neuron. These weights are updated in order for the agent to learn.
+
+    Public Attributes:
+    learning_rate -- The rate at which the agent's weight are modified
+    neurons -- Array of binary neurons that represent the surroundings
+    weights -- Dictionary containing each of the (i,j) connections
+    outputs -- Triple containing the sum of input neurons and direction
+    """
     def __init__(self, learning_rate):
         Agent.__init__(self)
         self.learning_rate = learning_rate
@@ -191,33 +204,29 @@ class SupervisedAgent(Agent):
         self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
 
     def _learn_step(self):
-        """Updates the neurons taking into account the surroundings
+        """Chooses a new movement and learns from it
 
-        The neuron array consists of 12 neurons, 4 neurons per cell (front,
-        left, right) that can represent the 4 different values of that given
-        cell. This method updates the neuron array according to the agent's
-        board at a given point.
+        This method updates the neuron array to the new surroundings of the
+        agent, computes the outputs of each decision and then chooses the best
+        one. After that, uses the Widrow-Hoff rule to update the weights of the
+        neurons in order to learn.
+
         """
         # Find all combinations of directions and possible values
         surroundings = self.look_around()
         pairs = [(x[1], y) for x in surroundings for y in ['.', 'W', 'F', 'P']]
         directions = [x[0] for x in surroundings]
-        #print(pairs)
 
         # Fill the neuron array by comparing each of the values generated
         for i in range(len(pairs)):
             direction, value = pairs[i]
             self.neurons[i] = 1 if (direction == value) else 0
 
-        #print(self.neurons)
-
         # Compute inputs
         self.outputs = [[0, direction] for direction in directions]
         for i in range(len(self.outputs)):
             for j in range(len(self.neurons)):
                 self.outputs[i][0] += self.weights[(i, j)] * self.neurons[j]
-
-        #print(self.outputs)
 
         # Make a choice based on the input obtained
         getvalue = itemgetter(0)
@@ -230,7 +239,6 @@ class SupervisedAgent(Agent):
         output_values = list(map(getvalue, self.outputs))
         sum_exp = sum([math.exp(n - max_out) for n in output_values])
         # Update each of the weights
-        #print(self.weights)
 
         idx = output_values.index(max_out)
         for j in range(len(self.neurons)):
@@ -239,7 +247,6 @@ class SupervisedAgent(Agent):
             delta = correct - (math.exp(output_n - max_out / sum_exp))
             self.weights[(idx, j)] += self.learning_rate * input_n * delta
 
-        #print()
         # Return the final action
         return choice
 
@@ -298,21 +305,3 @@ class SupervisedAgent(Agent):
             avg = sum(episode_rewards)/10
             print('Episode {}: {}'.format(i, avg))
             rewards.append(avg)
-
-
-def test():
-    agent = SupervisedAgent(0.05)
-    env = Flatland(10, 10)
-    print(agent.weights)
-    agent.train(50, False)
-    agent.new_environment(env)
-    # agent._learn_step()
-    agent.learn(50, True)
-    print(agent.weights)
-    # print(agent.environment.to_string())
-    # agent.visualize_steps()
-    # agent.visualize_board()
-
-
-if __name__ == "__main__":
-    test()
