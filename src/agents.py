@@ -204,15 +204,8 @@ class SupervisedAgent(Agent):
         pairs = [(i, j) for i in range(3) for j in range(12)]
         self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
 
-    def _learn_step(self):
-        """Chooses a new movement and learns from it
-
-        This method updates the neuron array to the new surroundings of the
-        agent, computes the outputs of each decision and then chooses the best
-        one. After that, uses the Widrow-Hoff rule to update the weights of the
-        neurons in order to learn.
-
-        """
+    def _fill_neurons(self):
+        """Fill the neuron array with new information of the environment"""
         # Find all combinations of directions and possible values
         surroundings = self.look_around()
         pairs = [(x[1], y) for x in surroundings for y in ['.', 'W', 'F', 'P']]
@@ -229,14 +222,18 @@ class SupervisedAgent(Agent):
             for j in range(len(self.neurons)):
                 self.outputs[i][0] += self.weights[(i, j)] * self.neurons[j]
 
-        # Make a choice based on the input obtained
-        getvalue = itemgetter(0)
-        max_out, choice = max(self.outputs, key=getvalue)
+    def _update_weights(self, max_out, choice):
+        """Use the policy to update the agent weights
 
+        Arguments:
+        max_out -- maximum value of the output array (for normlization)
+        choice -- choice taken by the neural network
+        """
         # Learn from the last step taken
         policy = self.policy_movement()
         correct = 1 if (policy == choice) else 0
         # Compute exponential part of delta_i
+        getvalue = itemgetter(0)
         output_values = list(map(getvalue, self.outputs))
         sum_exp = sum([math.exp(n - max_out) for n in output_values])
         # Update each of the weights
@@ -247,6 +244,23 @@ class SupervisedAgent(Agent):
             output_n = self.outputs[idx][0]
             delta = correct - (math.exp(output_n - max_out / sum_exp))
             self.weights[(idx, j)] += self.learning_rate * input_n * delta
+
+    def _learn_step(self):
+        """Chooses a new movement and learns from it
+
+        This method updates the neuron array to the new surroundings of the
+        agent, computes the outputs of each decision and then chooses the best
+        one. After that, uses the Widrow-Hoff rule to update the weights of the
+        neurons in order to learn.
+
+        """
+        self._update_neurons()
+
+        # Make a choice based on the input obtained
+        getvalue = itemgetter(0)
+        max_out, choice = max(self.outputs, key=getvalue)
+
+        self._update_weights(max_out, choice)
 
         # Return the final action
         return choice
