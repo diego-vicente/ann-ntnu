@@ -325,3 +325,12 @@ class SupervisedAgent(Agent):
         plt.plot(rewards)
         plt.ylabel('Average Rewards')
         plt.show()
+
+
+class QAgent(SupervisedAgent):
+
+    def __init__(self):
+        SupervisedAgent.__init__(self)
+
+    def _update_weights(self, max_out, choice):
+        pass
