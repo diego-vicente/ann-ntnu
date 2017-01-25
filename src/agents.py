@@ -1,5 +1,6 @@
 from flatland import Flatland
 from operator import itemgetter
+import matplotlib.pyplot as plt
 import random
 import math
 
@@ -305,3 +306,8 @@ class SupervisedAgent(Agent):
             avg = sum(episode_rewards)/10
             print('Episode {}: {}'.format(i, avg))
             rewards.append(avg)
+
+        plt.figure()
+        plt.plot(rewards)
+        plt.ylabel('Average Rewards')
+        plt.show()
