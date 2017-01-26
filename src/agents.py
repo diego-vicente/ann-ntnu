@@ -1,5 +1,7 @@
 from flatland import Flatland
 from operator import itemgetter
+from collections import defaultdict
+from copy import deepcopy
 import matplotlib.pyplot as plt
 import random
 import math
@@ -204,7 +206,7 @@ class SupervisedAgent(Agent):
         pairs = [(i, j) for i in range(3) for j in range(12)]
         self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
 
-    def _fill_neurons(self):
+    def _update_neurons(self):
         """Fill the neuron array with new information of the environment"""
         # Find all combinations of directions and possible values
         surroundings = self.look_around()
@@ -329,8 +331,60 @@ class SupervisedAgent(Agent):
 
 class QAgent(SupervisedAgent):
 
-    def __init__(self):
-        SupervisedAgent.__init__(self)
+    def __init__(self, learning_rate, discount):
+        SupervisedAgent.__init__(self, learning_rate)
+        self.discount = discount
+        self.qtable = defaultdict(float)
+        self._sa = None
+        self._sa_prime = None
 
     def _update_weights(self, max_out, choice):
-        pass
+        """Update the weights using the Q-table"""
+
+        # Check it's not the first execution
+        if self._sa is not None:
+
+            # _sa is already filled, use _sa_prime instead.
+            self._sa_prime = deepcopy(self.neurons)
+            self._sa_prime.append(choice)
+            self._sa_prime = tuple(self._sa_prime)
+
+            # Update the values
+            getvalue = itemgetter(0)
+            output_values = list(map(getvalue, self.outputs))
+            max_q_prime = self.qtable[self._sa_prime]
+            q = self.qtable[self._sa]
+            delta = self.reward + self.discount * max_q_prime - q
+
+            idx = output_values.index(max_out)
+            for j in range(len(self.neurons)):
+                input_n = self._sa[j]
+                self.weights[(idx, j)] += self.learning_rate * input_n * delta
+
+            # Update the Q-table entry for _sa
+            self.qtable[self._sa] += self.learning_rate * delta
+
+            # Turn _sa_prime into _sa for the next step
+            self._sa = deepcopy(self._sa_prime)
+
+        else:
+            # _sa is the list containing both neurons and action to be used
+            # as hash. We must fill them first
+            self._sa = deepcopy(self.neurons)
+            self._sa.append(choice)
+            self._sa = tuple(self._sa)
+
+    # Override the method to clean the aux variables in the agent
+    def new_environment(self, new_env):
+        """Sets a new Flatland environment for the agent"""
+        # Change the environment
+        self.environment = new_env
+        # Update the position to the new initial one
+        self.position = (new_env.agent_x, new_env.agent_y)
+        # Clear the previous solution trace
+        self.steps = []
+        # Clear the rewards from the previous solution
+        self.reward = 0
+        # Clear the state/action variables to maintain integrity
+        self._sa = None
+        self._sa_prime = None
