@@ -61,6 +61,7 @@ class Agent():
         y = self.position[1] + direction[1]
         mov_reward = self.environment.move_agent(x, y)
         # Update the rewards, position and direction value
+        self._r = mov_reward
         self.reward += mov_reward
         self.position = (x, y)
         self.facing = direction
@@ -81,7 +82,7 @@ class Agent():
         order) and the direction associated to each of the cells.
         """
 
-        front = self.facing
+        front = deepcopy(self.facing)
         if (front == Direction.N):
             left = Direction.W
             right = Direction.E
@@ -94,6 +95,8 @@ class Agent():
         elif (front == Direction.W):
             left = Direction.S
             right = Direction.N
+        else:
+            print('Error: Invalid direction used = ', front)
 
         surroundings = ((front, self.look_at(front)),
                         (left, self.look_at(left)),
@@ -298,12 +301,17 @@ class SupervisedAgent(Agent):
                 print('Iteration {}: {}, {}'.format(i, dirs[direction],
                                                     self.reward))
             if end:
+                self._into_wall()
                 return self.reward
 
         if output:
             print('End of solution, final reward: {}\n'.format(self.reward))
             print(self.environment.to_string())
         return self.reward
+
+    def _into_wall(self):
+        # Only for inheritance in the QAgents
+        pass
 
     def train(self, episodes, output):
         """Perform several executions in different environments to train the net
@@ -315,11 +323,11 @@ class SupervisedAgent(Agent):
         rewards = []
         for i in range(episodes):
             episode_rewards = []
-            for _ in range(10):
+            for _ in range(100):
                 env = Flatland(10, 10)
                 self.new_environment(env)
                 episode_rewards.append(self.learn(50, output))
-            avg = sum(episode_rewards)/10
+            avg = sum(episode_rewards)/100
             print('Episode {}: {}'.format(i, avg))
             rewards.append(avg)
 
@@ -331,9 +339,10 @@ class SupervisedAgent(Agent):
 
 class QAgent(SupervisedAgent):
 
-    def __init__(self, learning_rate, discount):
+    def __init__(self, learning_rate, discount, decay):
         SupervisedAgent.__init__(self, learning_rate)
         self.discount = discount
+        self.decay = decay
         self.qtable = defaultdict(float)
         self._sa = None
         self._sa_prime = None
@@ -345,24 +354,26 @@ class QAgent(SupervisedAgent):
         if self._sa is not None:
 
             # _sa is already filled, use _sa_prime instead.
-            self._sa_prime = deepcopy(self.neurons)
-            self._sa_prime.append(choice)
-            self._sa_prime = tuple(self._sa_prime)
+            self._sa_prime = tuple(deepcopy(self.neurons) + list(choice))
+            max_q_prime, _ = self.max_q()
 
             # Update the values
             getvalue = itemgetter(0)
             output_values = list(map(getvalue, self.outputs))
-            max_q_prime = self.qtable[self._sa_prime]
             q = self.qtable[self._sa]
-            delta = self.reward + self.discount * max_q_prime - q
+            delta = self._r + self.discount * max_q_prime - q
 
-            idx = output_values.index(max_out)
+            # Update the Q-table entry for Q(s, a)
+            self.qtable[self._sa] += self.learning_rate * delta
+
             for j in range(len(self.neurons)):
                 input_n = self._sa[j]
-                self.weights[(idx, j)] += self.learning_rate * input_n * delta
+                i = self._old_idx
+                self.weights[(i, j)] += self.learning_rate * input_n * delta
 
-            # Update the Q-table entry for _sa
-            self.qtable[self._sa] += self.learning_rate * delta
+            # Update values for backpropagations
+            self._old_idx = output_values.index(max_out)
+            self._old_r = self._r
 
             # Turn _sa_prime into _sa for the next step
             self._sa = deepcopy(self._sa_prime)
@@ -370,9 +381,53 @@ class QAgent(SupervisedAgent):
         else:
             # _sa is the list containing both neurons and action to be used
             # as hash. We must fill them first
-            self._sa = deepcopy(self.neurons)
-            self._sa.append(choice)
-            self._sa = tuple(self._sa)
+            self._sa = tuple(deepcopy(self.neurons) + list(choice))
+            getvalue = itemgetter(0)
+            output_values = list(map(getvalue, self.outputs))
+            self._old_idx = output_values.index(max_out)
+            self._old_r = self._r
+
+    # Overriden to ensure that running into a wall is reflected in qtable
+    def _into_wall(self):
+        # Check it's not the first execution
+        if self._sa is not None and self._sa_prime is not None:
+
+            # Update the values
+            delta = -100
+
+            # Update the Q-table entry for Q(s, a)
+            self.qtable[self._sa] += self.learning_rate * delta
+
+            for j in range(len(self.neurons)):
+                input_n = self._sa_prime[j]
+                i = self._old_idx
+                self.weights[(i, j)] += self.learning_rate * input_n * delta
+
+    def max_q(self):
+
+        front = deepcopy(self.facing)
+        if (front == Direction.N):
+            left = Direction.W
+            right = Direction.E
+        elif (front == Direction.E):
+            left = Direction.N
+            right = Direction.S
+        elif (front == Direction.S):
+            left = Direction.E
+            right = Direction.W
+        elif (front == Direction.W):
+            left = Direction.S
+            right = Direction.N
+
+        # print(front, left, right, self.neurons)
+
+        hashes = [tuple(self.neurons + list(d)) for d in [front, left, right]]
+        outputs = [(self.qtable[i], i) for i in hashes]
+
+        getvalue = itemgetter(0)
+        max_q = max(outputs, key=getvalue)
+
+        return max_q
 
     # Override the method to clean the aux variables in the agent
     def new_environment(self, new_env):
@@ -388,3 +443,19 @@ class QAgent(SupervisedAgent):
         # Clear the state/action variables to maintain integrity
         self._sa = None
         self._sa_prime = None
+        self._old_idx = None
+        self._r = 0
+        self._old_r = 0
+        # Decay the learning rate
+        self.learning_rate *= self.decay
+
+
+if __name__ == '__main__':
+    agent = QAgent(0.008, 0.99, 1)
+    agent.train(20, False)
+    agent.new_environment(Flatland(10, 10))
+    agent.learn(50, True)
+    for line in agent.qtable:
+        print(line, agent.qtable[line])
+    for line in agent.weights:
+        print(line, agent.weights[line])
