@@ -10,9 +10,17 @@ import math
 class Direction():
     """Represents North, East, South and West in tuples for coordinates"""
     N = (0, -1)
+    NN = (0, -2)
+    NNN = (0, -3)
     E = (1, 0)
+    EE = (2, 0)
+    EEE = (3, 0)
     S = (0, 1)
+    SS = (0, 2)
+    SSS = (0, 3)
     W = (-1, 0)
+    WW = (-2, 0)
+    WWW = (-3, 0)
 
 
 class Agent():
@@ -214,7 +222,7 @@ class SupervisedAgent(Agent):
         # Find all combinations of directions and possible values
         surroundings = self.look_around()
         pairs = [(x[1], y) for x in surroundings for y in ['.', 'W', 'F', 'P']]
-        directions = [x[0] for x in surroundings]
+        directions = [x[0] for x in surroundings[:3]]
 
         # Fill the neuron array by comparing each of the values generated
         for i in range(len(pairs)):
@@ -326,7 +334,9 @@ class SupervisedAgent(Agent):
             for _ in range(100):
                 env = Flatland(10, 10)
                 self.new_environment(env)
-                episode_rewards.append(self.learn(50, output))
+                result = self.learn(50, output)
+                print(result)
+                episode_rewards.append(result)
             avg = sum(episode_rewards)/100
             print('Episode {}: {}'.format(i, avg))
             rewards.append(avg)
@@ -450,12 +460,84 @@ class QAgent(SupervisedAgent):
         self.learning_rate *= self.decay
 
 
+class EnhancedAgent(QAgent):
+
+    def __init__(self, learning_rate, discount, decay):
+        QAgent.__init__(self, learning_rate, discount, decay)
+        self.neurons = [0 for _ in range(36)]
+        pairs = [(i, j) for i in range(3) for j in range(36)]
+        self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
+
+    def look_around(self):
+        """Returns the values of the left, front and right cells
+
+        This method implements the basic perception of an agent. Returns a
+        triple with the values of each cell (left, front and right in that
+        order) and the direction associated to each of the cells.
+        """
+
+        front = deepcopy(self.facing)
+        if (front == Direction.N):
+            front1 = Direction.NN
+            front2 = Direction.NNN
+            left = Direction.W
+            left1 = Direction.WW
+            left2 = Direction.WWW
+            right = Direction.E
+            right1 = Direction.EE
+            right2 = Direction.EEE
+        elif (front == Direction.E):
+            front1 = Direction.EE
+            front2 = Direction.EEE
+            left = Direction.N
+            left1 = Direction.NN
+            left2 = Direction.NNN
+            right = Direction.S
+            right1 = Direction.SS
+            right2 = Direction.SSS
+        elif (front == Direction.S):
+            front1 = Direction.SS
+            front2 = Direction.SSS
+            left = Direction.E
+            left1 = Direction.EE
+            left2 = Direction.EEE
+            right = Direction.W
+            right1 = Direction.WW
+            right2 = Direction.WWW
+        elif (front == Direction.W):
+            front1 = Direction.WW
+            front2 = Direction.WWW
+            left = Direction.S
+            left1 = Direction.SS
+            left2 = Direction.SSS
+            right = Direction.N
+            right1 = Direction.NN
+            right2 = Direction.NNN
+        else:
+            print('Error: Invalid direction used = ', front)
+
+        surroundings = ((front, self.look_at(front)),
+                        (left, self.look_at(left)),
+                        (right, self.look_at(right)),
+                        (front1, self.look_at(front1)),
+                        (front2, self.look_at(front2)),
+                        (left1, self.look_at(left1)),
+                        (left2, self.look_at(left2)),
+                        (right1, self.look_at(right1)),
+                        (right2, self.look_at(right2)))
+
+        # print('I see {} in front, {} left, and {} right.'.format(
+        #     surroundings[0][1], surroundings[1][1], surroundings[2][1]))
+
+        return surroundings
+
+
 if __name__ == '__main__':
-    agent = QAgent(0.008, 0.99, 1)
+    agent = EnhancedAgent(0.01, 0.99, 1)
     agent.train(20, False)
     agent.new_environment(Flatland(10, 10))
     agent.learn(50, True)
-    for line in agent.qtable:
-        print(line, agent.qtable[line])
+    #for line in agent.qtable:
+    #    print(line, agent.qtable[line])
     for line in agent.weights:
         print(line, agent.weights[line])
