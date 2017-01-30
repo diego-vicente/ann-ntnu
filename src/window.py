@@ -1,7 +1,7 @@
 from flatland import Flatland
 from agents import GreedyAgent, SupervisedAgent
 import pygame
-import sys
+import time
 
 
 class Simulation():
@@ -62,6 +62,8 @@ class Simulation():
                         self.previous_step()
                     elif event.key == pygame.K_RIGHT:
                         self.next_step()
+                    elif event.key == pygame.K_SPACE:
+                        self.run()
 
     def _points_to_coordinates(self, points):
         """Translate a list of points to coordinates in Simulation canvas"""
@@ -132,7 +134,12 @@ class Simulation():
         """Displays previous step in the simulation (if any)"""
         if (self._step > 1):
             self._step -= 1
-            self._draw_window
+            self._draw_window()
+
+    def run(self):
+        for step in (self.agent.steps):
+            pygame.time.wait(200)
+            self.next_step()
 
 
 def main():
