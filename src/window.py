@@ -107,12 +107,18 @@ class Simulation():
                         self.next_step()
                     elif event.key == pygame.K_SPACE:
                         self.run()
+                    elif event.key == pygame.K_b:
+                        self._draw_brain()
+                    elif event.key == pygame.K_t:
+                        self.visual_training()
+                    elif event.key == pygame.K_g:
+                        self._draw_grid()
 
     def _points_to_coordinates(self, points):
         """Translate a list of points to coordinates in Simulation canvas"""
         return [self._grid[point] for point in points]
 
-    def _draw_window(self):
+    def _draw_grid(self):
         """Draws all the components in the window at a given time"""
         # Draw a white background
         self.screen.fill(self._white)
@@ -171,18 +177,33 @@ class Simulation():
         """Displays next step in the simulation (if any)"""
         if (self._step < len(self.agent.steps)):
             self._step += 1
-            self._draw_window()
+            self._draw_grid()
 
     def previous_step(self):
         """Displays previous step in the simulation (if any)"""
         if (self._step > 1):
             self._step -= 1
-            self._draw_window()
+            self._draw_grid()
 
     def run(self):
+        """Run the complete execution automatically"""
+        self._step = 1
         for step in (self.agent.steps):
             pygame.time.wait(200)
             self.next_step()
+
+    def visual_training(self):
+        """Display the evolution of the ANN during a training"""
+        self._draw_brain()
+        for i in range(50):
+            episode_rewards = []
+            for _ in range(100):
+                env = Flatland(10, 10)
+                self.agent.new_environment(env)
+                result = self.agent.learn(50, False)
+                episode_rewards.append(result)
+            avg = sum(episode_rewards)/100
+            self._draw_brain()
 
     def _draw_brain(self):
         """Displays the ANN representation in the window"""
@@ -235,9 +256,9 @@ class Simulation():
 
 
 def main():
-    agent = SupervisedAgent(0.4)
+    agent = QAgent(0.01, 0.99, 1)
     env = Flatland(10, 10)
-    agent.train(20, False)
+    # agent.train(20, False)
     agent.new_environment(env)
     agent.learn(50, True)
     simulation = Simulation(agent)
