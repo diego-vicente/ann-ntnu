@@ -73,3 +73,28 @@ Widrow-Hoff rule.
 
 @@comment: Insert screenshot@@
 
+* Reinforcement Learning of the Neural Agent
+
+** *Include a few lines of code from the part of your program where the delta values (di) are calculated and explain how this code implements Equation 5.*
+
+#+BEGIN_SRC python
+# Update the values
+getvalue = itemgetter(0)
+output_values = list(map(getvalue, self.outputs))
+q = self.qtable[self._sa]
+delta = self._r + self.discount * max_q_prime - q
+
+# Update the Q-table entry for Q(s, a)
+self.qtable[self._sa] += self.learning_rate * delta
+
+# Update weights
+i = self._old_idx
+for j in range(len(self.neurons)):
+    input_n = self._sa[j]
+    self.weights[(i, j)] += self.learning_rate * input_n * delta
+#+END_SRC
+
+In this snippet of ~QAgent~, we can see how we first compute the delta function
+and then we use it to update the appropriate entry ($Q(s,a)$). Then, we update
+the weights of the previous turn using the delta rule for $(s,a)$. After this
+snippet, the values are updated with the ones in this turn.
