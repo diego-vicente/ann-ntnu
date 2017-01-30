@@ -7,7 +7,7 @@
 #+LANGUAGE: en
 #+OPTIONS: toc:nil date:nil H:1
 
-* Task 1
+* Flatland & Baseline Agent
 
 ** *Provide a brief overview of your implementation. Include a screenshot of your Flatland visualization.* 
 
@@ -40,4 +40,36 @@ always chooses to go front, to prevent loops due to empty cells.
 
 After 1000 executions, the average reward obtained by ~GreedyAgent~ is 20.335.
 
+* Supervised Learning of the Neural Agent
+
+** *Include a few lines of code from the part of your program where the delta values are calculated and explain how this code implements Equation 3.*
+
+#+BEGIN_SRC python
+# Learn from the last step taken
+policy = self.policy_movement()
+correct = 1 if (policy == choice) else 0
+
+# Compute common part of delta_i
+getvalue = itemgetter(0)
+output_values = list(map(getvalue, self.outputs))
+sum_exp = sum([math.exp(n - max_out) for n in output_values])
+
+# Update each of the weights
+idx = output_values.index(max_out)
+for j in range(len(self.neurons)):
+    input_n = self.neurons[j]
+    output_n = self.outputs[idx][0]
+    delta = correct - (math.exp(output_n - max_out / sum_exp))
+    self.weights[(idx, j)] += self.learning_rate * input_n * delta
+#+END_SRC
+
+In this snippet, we can see how first we compute the policy greedy movement, in
+order to guess the value of $correct(i)$. Afterwards, we compute the part that
+is common for all neurons in $\delta_i$, that is $\sum e^{y_k}$. Then, for all
+the actions related to the action chosen, we update the weights using the
+Widrow-Hoff rule.
+
+** *Plot how your agent’s performance develops as the number of training rounds increases.*
+
+@@comment: Insert screenshot@@
 
