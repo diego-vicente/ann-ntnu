@@ -1,5 +1,5 @@
 from flatland import Flatland
-from agents import GreedyAgent
+from agents import GreedyAgent, SupervisedAgent
 import pygame
 import sys
 
@@ -41,6 +41,7 @@ class Simulation():
                 # Round to int
                 self._grid[i, j] = (int(self._grid[i, j][0]),
                                     int(self._grid[i, j][1]))
+        self._step = 1
 
     def start(self):
         """Starts the simulation loop"""
@@ -49,11 +50,18 @@ class Simulation():
         # Call the draw function to start
         self._draw_window()
         # Intiate the GUI loop
-        while (True):
+        end = False
+        while not end:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    end = True
                     pygame.quit()
-                    sys.exit()
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.previous_step()
+                    elif event.key == pygame.K_RIGHT:
+                        self.next_step()
 
     def _points_to_coordinates(self, points):
         """Translate a list of points to coordinates in Simulation canvas"""
@@ -80,6 +88,8 @@ class Simulation():
                    self._grid_o[1] + i * self._cell_size)
             pygame.draw.lines(self.screen, self._black, False, [start, end], 1)
 
+        steps = self.agent.steps[:self._step]
+
         # Draw each element in the grid
         for i in range(-1, self.env.rows + 1):
             for j in range(-1, self.env.cols + 1):
@@ -88,35 +98,49 @@ class Simulation():
                     pygame.draw.circle(self.screen, self._wall,
                                        self._grid[i, j], 10, 0)
                 elif (cell == 'F'):
-                    if (i, j) in self.agent.steps:
+                    if (i, j) in steps:
                         pygame.draw.circle(self.screen, self._eaten_food,
                                            self._grid[i, j], 10, 0)
                     else:
                         pygame.draw.circle(self.screen, self._food,
                                            self._grid[i, j], 10, 0)
                 elif (cell == 'P'):
-                    if (i, j) in self.agent.steps:
+                    if (i, j) in steps:
                         pygame.draw.circle(self.screen, self._eaten_poison,
                                            self._grid[i, j], 10, 0)
                     else:
                         pygame.draw.circle(self.screen, self._poison,
                                            self._grid[i, j], 10, 0)
-                elif (cell == 'A'):
-                    pygame.draw.circle(self.screen, self._agent,
-                                       self._grid[i, j], 10, 0)
 
-        trace = self._points_to_coordinates(self.agent.steps)
-        pygame.draw.lines(self.screen, self._agent, False, trace, 5)
+        agent = self._grid[steps[-1]]
+        pygame.draw.circle(self.screen, self._agent, agent, 10, 0)
+
+        trace = self._points_to_coordinates(steps)
+        if (len(trace) > 1):
+            pygame.draw.lines(self.screen, self._agent, False, trace, 5)
 
         # Refresh the window once all the changes are done
         pygame.display.update()
 
+    def next_step(self):
+        """Displays next step in the simulation (if any)"""
+        if (self._step < len(self.agent.steps)):
+            self._step += 1
+            self._draw_window()
+
+    def previous_step(self):
+        """Displays previous step in the simulation (if any)"""
+        if (self._step > 1):
+            self._step -= 1
+            self._draw_window
+
 
 def main():
-    agent = GreedyAgent()
+    agent = SupervisedAgent(0.4)
     env = Flatland(10, 10)
+    agent.train(20, False)
     agent.new_environment(env)
-    agent.run(50, True)
+    agent.learn(50, True)
     simulation = Simulation(agent)
     simulation.start()
 
