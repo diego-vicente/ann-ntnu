@@ -1,7 +1,6 @@
 from flatland import Flatland
-from agents import GreedyAgent, SupervisedAgent
+from agents import GreedyAgent, SupervisedAgent, QAgent
 import pygame
-import time
 
 
 class Simulation():
@@ -20,9 +19,37 @@ class Simulation():
     _agent = (230, 230, 0)
     _wall = (200, 200, 200)
 
-    # Coordinates and other parameters of size
+    # Grid coordinates and other parameters of size
     _grid_o = (20, 20)
     _cell_size = 40
+
+    # Brain coordinates and other parameters of size
+    _brain_o = (20, 20)
+    _input_spacing = 42
+    _input_o = (20, 20)
+    _input_n_o = (100, 25)
+    _output_spacing = 170
+    _output_o = (370, 85)
+    _output_n_o = (350, 90)
+
+    # Hardcoded meanings of each input neuron
+    _input_meanings = {0: 'E in front',
+                       1: 'W in front',
+                       2: 'F in front',
+                       3: 'P in front',
+                       4: 'E left',
+                       5: 'W left',
+                       6: 'F left',
+                       7: 'P left',
+                       8: 'E right',
+                       9: 'W right',
+                       10: 'F right',
+                       11: 'P right'}
+
+    # Hardcoded meanings of each output neuron
+    _output_meanings = {0: 'Move forwards',
+                        1: 'Move left',
+                        2: 'Move right'}
 
     def __init__(self, agent):
         """Creates a new Simulation given an agent and a environment"""
@@ -31,6 +58,10 @@ class Simulation():
         # Compute window size
         self.height = (self.env.rows + 2) * self._cell_size + 2*self._grid_o[1]
         self.width = (self.env.cols + 2) * self._cell_size + 2*self._grid_o[0]
+        # Init the font module
+        pygame.init()
+        self._font = pygame.font.SysFont("Consolas", 20)
+
         # Populate grid centers dictionary
         self._grid = {}
         for i in range(-1, self.env.rows + 1):
@@ -41,6 +72,18 @@ class Simulation():
                 # Round to int
                 self._grid[i, j] = (int(self._grid[i, j][0]),
                                     int(self._grid[i, j][1]))
+
+        # Populate the input & output neurons dictionaries
+        self._inputs = {}
+        for i in range(len(self.agent.neurons)):
+            self._inputs[i] = (self._input_n_o[0],
+                               self._input_n_o[1] + i * self._input_spacing)
+
+        self._outputs = {}
+        for i in range(len(self.agent.outputs)):
+            self._outputs[i] = (self._output_n_o[0],
+                                self._output_n_o[1] + i * self._output_spacing)
+
         self._step = 1
 
     def start(self):
@@ -48,7 +91,7 @@ class Simulation():
         # Create the screen
         self.screen = pygame.display.set_mode((self.height, self.width))
         # Call the draw function to start
-        self._draw_window()
+        self._draw_grid()
         # Intiate the GUI loop
         end = False
         while not end:
@@ -140,6 +183,55 @@ class Simulation():
         for step in (self.agent.steps):
             pygame.time.wait(200)
             self.next_step()
+
+    def _draw_brain(self):
+        """Displays the ANN representation in the window"""
+        # Draw a white background
+        self.screen.fill(self._white)
+
+        for i in range(len(self.agent.neurons)):
+            # Render input neuron text
+            neuron = self._font.render(self._input_meanings[i],
+                                       True, self._black)
+            origin = (self._input_o[0],
+                      self._input_o[1] + i * self._input_spacing)
+            self.screen.blit(neuron, origin)
+
+            # Render output neuron dot
+            pygame.draw.circle(self.screen, self._black,
+                               self._inputs[i], 5, 0)
+
+        for i in range(len(self.agent.outputs)):
+            # Render output neuron text
+            neuron = self._font.render(self._output_meanings[i],
+                                       True, self._black)
+            origin = (self._output_o[0],
+                      self._output_o[1] + i * self._output_spacing)
+            self.screen.blit(neuron, origin)
+
+            # Render output neuron dot
+            pygame.draw.circle(self.screen, self._black,
+                               self._outputs[i], 5, 0)
+
+        for i in range(len(self.agent.outputs)):
+            for j in range(len(self.agent.neurons)):
+                weight = round(self.agent.weights[i, j] * 3)
+                if weight > 0:
+                    if weight < 255:
+                        color = (255 - weight, 255, 255 - weight)
+                    else:
+                        color = (0, 255, 0)
+                else:
+                    if weight > -255:
+                        color = (255, 255 + weight, 255 + weight)
+                    else:
+                        color = (255, 0, 0)
+                start = self._inputs[j]
+                end = self._outputs[i]
+                pygame.draw.lines(self.screen, color, False,
+                                  [start, end], 4)
+        # Refresh the window once all the changes are done
+        pygame.display.update()
 
 
 def main():
