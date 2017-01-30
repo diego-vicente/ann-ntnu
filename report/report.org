@@ -1,0 +1,43 @@
+#+TITLE: Supervised and Reinforcement Learning of Neural Agent Controllers
+#+AUTHOR: Diego Vicente Martín 
+#+EMAIL: diegovi@stud.ntnu.no
+#+LaTeX_CLASS: article
+#+LaTeX_CLASS_OPTIONS: [10pt]
+#+LATEX_HEADER: \usepackage[margin=2cm]{geometry}
+#+LANGUAGE: en
+#+OPTIONS: toc:nil date:nil H:1
+
+* Task 1
+
+** *Provide a brief overview of your implementation. Include a screenshot of your Flatland visualization.* 
+
+The implementation is done in Python, and all the important source code files
+are present in the ~src/~ folder. In there, we can find several different
+files: 
+
+- ~flatland.py~: In which we can find the ~Flatland~ class, which is in charge
+  of the environment representation. This class also contains the necessary
+  methods to query the board and look around in it.
+- ~agents.py~: In which we can find the main agent (~Agent~), which implements
+  the common tasks for each of the agents; as well as the required agents for
+  the assignment. We can also find the ~Direction~ class, used to represent
+  directions in the board.
+- ~window.py~: which includes the ~Simulation~ class, that creates a visual
+  representation of the last execution of an agent using ~pygame~.
+- ~run.py~: prepares a demo execution to show the different agents.
+
+@@comment: Insert screenshot@@ 
+
+** *Describe how your baseline agent decides whether to move left, forward or right.* 
+
+The baseline agent (~GreedyAgent~) follows a simple policy, in which he first
+tries to go for a cell with food, if not possible one empty, and if there is no
+other choice he goes to a cell with poison. To make it perform better, if there
+are several cells with the target content (i.e food front and left), the agent
+always chooses to go front, to prevent loops due to empty cells.
+
+** *What is the average score achieved by your baseline agent over many trials?*  
+
+After 1000 executions, the average reward obtained by ~GreedyAgent~ is 20.335.
+
+
