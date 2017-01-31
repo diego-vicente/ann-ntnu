@@ -1,5 +1,5 @@
 from flatland import Flatland
-from agents import GreedyAgent, SupervisedAgent, QAgent
+from agents import GreedyAgent, SupervisedAgent, ReinforcementAgent
 import pygame
 
 
@@ -31,6 +31,7 @@ class Simulation():
     _output_spacing = 170
     _output_o = (370, 85)
     _output_n_o = (350, 90)
+    _avg_o = (300, 480)
 
     # Hardcoded meanings of each input neuron
     _input_meanings = {0: 'E in front',
@@ -85,6 +86,7 @@ class Simulation():
                                 self._output_n_o[1] + i * self._output_spacing)
 
         self._step = 1
+        self._avg = None
 
     def start(self):
         """Starts the simulation loop"""
@@ -204,7 +206,7 @@ class Simulation():
                 self.agent.new_environment(env)
                 result = self.agent.learn(50, False)
                 episode_rewards.append(result)
-            avg = sum(episode_rewards)/100
+            self._avg = sum(episode_rewards)/100
             self._draw_brain()
 
     def _new_run(self):
@@ -240,8 +242,8 @@ class Simulation():
             for j in range(len(self.agent.neurons)):
                 weight = round(self.agent.weights[i, j] * 100)
                 if weight > 0:
-                    if weight * 15 < 255:
-                        color = (255 - weight * 5, 255, 255 - weight * 5)
+                    if weight < 255:
+                        color = (255 - weight, 255, 255 - weight)
                     else:
                         color = (0, 255, 0)
                 else:
@@ -253,18 +255,25 @@ class Simulation():
                 end = self._outputs[i]
                 pygame.draw.lines(self.screen, color, False,
                                   [start, end], 4)
+
+        # Display rewards if any
+        if self._avg is not None:
+            label = self._font.render('Average rewards: {}'.format(self._avg),
+                                      True, self._black)
+            self.screen.blit(label, self._avg_o)
+
         # Refresh the window once all the changes are done
         pygame.display.update()
 
 
 def main():
-    agent = QAgent(0.05, 0.99, 1)
+    agent = ReinforcementAgent(0.005, 0.99, 1)
     env = Flatland(10, 10)
-    agent.train(50, False)
+    #agent.train(50, False)
     agent.new_environment(env)
     agent.learn(50, True)
     simulation = Simulation(agent)
-    #simulation.start()
+    simulation.start()
     print(agent.weights)
 
 
