@@ -25,14 +25,8 @@ class Simulation():
     _cell_size = 40
 
     # Brain coordinates and other parameters of size
-    _brain_o = (20, 20)
     _input_spacing = 42
-    _input_o = (20, 20)
-    _input_n_o = (100, 25)
     _output_spacing = 170
-    _output_o = (370, 85)
-    _output_n_o = (350, 90)
-    _avg_o = (300, 480)
 
     # Hardcoded meanings of each input neuron
     _input_meanings = {0: 'E in front',
@@ -60,6 +54,15 @@ class Simulation():
         # Compute window size
         self.height = (self.env.rows + 2) * self._cell_size + 2*self._grid_o[1]
         self.width = (self.env.cols + 2) * self._cell_size + 2*self._grid_o[0]
+        # Compute the brain size and update window
+        self._brain_o = (self.height, 20)
+        self.height *= 2
+        self._input_o = self._brain_o
+        self._input_n_o = (self._input_o[0] + 90, self._input_o[1] + 5)
+        self._output_o = (self._input_o[0] + 350, 85)
+        self._output_n_o = (self._output_o[0] - 20, 90)
+        self._avg_o = (self._output_n_o[0], 480)
+
         # Init the font module
         pygame.init()
         self._font = pygame.font.SysFont("Consolas", 20)
@@ -82,7 +85,7 @@ class Simulation():
                                self._input_n_o[1] + i * self._input_spacing)
 
         self._outputs = {}
-        for i in range(len(self.agent.outputs)):
+        for i in range(3):
             self._outputs[i] = (self._output_n_o[0],
                                 self._output_n_o[1] + i * self._output_spacing)
 
@@ -95,7 +98,7 @@ class Simulation():
         # Create the screen
         self.screen = pygame.display.set_mode((self.height, self.width))
         # Call the draw function to start
-        self._draw_grid()
+        self._draw_window()
         # Intiate the GUI loop
         end = False
         while not end:
@@ -111,12 +114,8 @@ class Simulation():
                         self.next_step()
                     elif event.key == pygame.K_SPACE:
                         self.run()
-                    elif event.key == pygame.K_b:
-                        self._draw_brain()
                     elif event.key == pygame.K_t:
                         self.visual_training()
-                    elif event.key == pygame.K_g:
-                        self._draw_grid()
                     elif event.key == pygame.K_n:
                         self._new_run()
 
@@ -124,11 +123,8 @@ class Simulation():
         """Translate a list of points to coordinates in Simulation canvas"""
         return [self._grid[point] for point in points]
 
-    def _draw_grid(self):
+    def _draw_window(self, training=False):
         """Draws all the components in the window at a given time"""
-        # Update the state boolean
-        self._seeing_brain = False
-        
         # Draw a white background
         self.screen.fill(self._white)
 
@@ -150,93 +146,38 @@ class Simulation():
 
         steps = self.agent.steps[:self._step]
 
-        # Draw each element in the grid
-        for i in range(-1, self.env.rows + 1):
-            for j in range(-1, self.env.cols + 1):
-                cell = self.env.get_original_cell(i, j)
-                if (cell == 'W'):
-                    pygame.draw.circle(self.screen, self._wall,
-                                       self._grid[i, j], 10, 0)
-                elif (cell == 'F'):
-                    if (i, j) in steps:
-                        pygame.draw.circle(self.screen, self._eaten_food,
+        if not training:
+            # Draw each element in the grid
+            for i in range(-1, self.env.rows + 1):
+                for j in range(-1, self.env.cols + 1):
+                    cell = self.env.get_original_cell(i, j)
+                    if (cell == 'W'):
+                        pygame.draw.circle(self.screen, self._wall,
                                            self._grid[i, j], 10, 0)
-                    else:
-                        pygame.draw.circle(self.screen, self._food,
-                                           self._grid[i, j], 10, 0)
-                elif (cell == 'P'):
-                    if (i, j) in steps:
-                        pygame.draw.circle(self.screen, self._eaten_poison,
-                                           self._grid[i, j], 10, 0)
-                    else:
-                        pygame.draw.circle(self.screen, self._poison,
-                                           self._grid[i, j], 10, 0)
+                    elif (cell == 'F'):
+                        if (i, j) in steps:
+                            pygame.draw.circle(self.screen, self._eaten_food,
+                                               self._grid[i, j], 10, 0)
+                        else:
+                            pygame.draw.circle(self.screen, self._food,
+                                               self._grid[i, j], 10, 0)
+                    elif (cell == 'P'):
+                        if (i, j) in steps:
+                            pygame.draw.circle(self.screen, self._eaten_poison,
+                                               self._grid[i, j], 10, 0)
+                        else:
+                            pygame.draw.circle(self.screen, self._poison,
+                                               self._grid[i, j], 10, 0)
 
-        agent = self._grid[steps[-1]]
-        pygame.draw.circle(self.screen, self._agent, agent, 10, 0)
+            agent = self._grid[steps[-1]]
+            pygame.draw.circle(self.screen, self._agent, agent, 10, 0)
 
-        trace = self._points_to_coordinates(steps)
-        if (len(trace) > 1):
-            pygame.draw.lines(self.screen, self._agent, False, trace, 5)
+            trace = self._points_to_coordinates(steps)
+            if (len(trace) > 1):
+                pygame.draw.lines(self.screen, self._agent, False, trace, 5)
 
-        # Refresh the window once all the changes are done
-        pygame.display.update()
-
-    def next_step(self):
-        """Displays next step in the simulation (if any)"""
-        if (self._step < len(self.agent.steps)):
-            self._step += 1
-            if self._seeing_brain:
-                self._draw_brain()
-            else:
-                self._draw_grid()
-
-    def previous_step(self):
-        """Displays previous step in the simulation (if any)"""
-        if (self._step > 1):
-            self._step -= 1
-            if self._seeing_brain:
-                self._draw_brain()
-            else:
-                self._draw_grid()
-
-    def run(self):
-        """Run the complete execution automatically"""
-        self._step = 1
-        for step in (self.agent.steps):
-            pygame.time.wait(200)
-            self.next_step()
-
-    def visual_training(self):
-        """Display the evolution of the ANN during a training"""
-        self._draw_brain()
-        for i in range(50):
-            episode_rewards = []
-            for _ in range(100):
-                env = Flatland(10, 10)
-                self.agent.new_environment(env)
-                result = self.agent.learn(50, False)
-                episode_rewards.append(result)
-            self._avg = sum(episode_rewards)/100
-            self._draw_brain(training=True)
-
-    def _new_run(self):
-        self.env = Flatland(10, 10)
-        # agent.train(20, False)
-        self.agent.new_environment(self.env)
-        self.agent.learn(50, False)
-        self._step = 1
-        self._draw_grid()
-
-    def _draw_brain(self, training=False):
-        """Displays the ANN representation in the window"""
-        # Update the state boolean
-        self._seeing_brain = True
+        # Draw brain
         last = self._step >= len(self.agent.output_story)
-
-        # Draw a white background
-        self.screen.fill(self._white)
-
         for i in range(len(self.agent.neurons)):
             # Render input neuron text
             neuron = self._font.render(self._input_meanings[i],
@@ -246,14 +187,18 @@ class Simulation():
             self.screen.blit(neuron, origin)
 
             # Render the current neural perception
-            triggered = self.agent.neuron_story[self._step-1][i]
-            if triggered and not training and not last:
+            triggered = False
+            if not last:
+                triggered = self.agent.neuron_story[self._step-1][i]
+            if triggered and not training:
                 origin = (self._input_n_o[0],
                           self._input_n_o[1] + i * self._input_spacing)
                 pygame.draw.circle(self.screen, self._neuron_on,
                                    origin, 10, 0)
 
-        output = self.agent.output_story[self._step-1]
+        output = -1
+        if not last:
+            output = self.agent.output_story[self._step-1]
         for i in range(len(self.agent.outputs)):
             # Render output neuron text
             neuron = self._font.render(self._output_meanings[i],
@@ -297,16 +242,54 @@ class Simulation():
         # Refresh the window once all the changes are done
         pygame.display.update()
 
+    def next_step(self):
+        """Displays next step in the simulation (if any)"""
+        if (self._step < len(self.agent.steps)):
+            self._step += 1
+            self._draw_window()
+
+    def previous_step(self):
+        """Displays previous step in the simulation (if any)"""
+        if (self._step > 1):
+            self._step -= 1
+            self._draw_window()
+
+    def run(self):
+        """Run the complete execution automatically"""
+        self._step = 1
+        for step in (self.agent.steps):
+            pygame.time.wait(200)
+            self.next_step()
+
+    def visual_training(self):
+        """Display the evolution of the ANN during a training"""
+        self._draw_window()
+        for i in range(50):
+            episode_rewards = []
+            for _ in range(100):
+                env = Flatland(10, 10)
+                self.agent.new_environment(env)
+                result = self.agent.learn(50, False)
+                episode_rewards.append(result)
+            self._avg = sum(episode_rewards)/100
+            self._draw_window(training=True)
+
+    def _new_run(self):
+        self.env = Flatland(10, 10)
+        # agent.train(20, False)
+        self.agent.new_environment(self.env)
+        self.agent.learn(50, False)
+        self._step = 1
+        self._draw_window()
+
 
 def main():
     agent = ReinforcementAgent(0.005, 0.99, 1)
     env = Flatland(10, 10)
-    #agent.train(50, False)
     agent.new_environment(env)
-    agent.learn(50, True)
+    agent.learn(50, False)
     simulation = Simulation(agent)
     simulation.start()
-    print(agent.weights)
 
 
 if __name__ == "__main__":

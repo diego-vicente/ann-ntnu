@@ -1,7 +1,6 @@
 from flatland import Flatland
 from operator import itemgetter
 from copy import copy
-import matplotlib.pyplot as plt
 import random
 import math
 
@@ -257,8 +256,6 @@ class SupervisedAgent(Agent):
         for i in range(len(self.outputs)):
             for j in range(len(self.neurons)):
                 self.outputs[i][0] += self.weights[(i, j)] * self.neurons[j]
-
-        self.neuron_story.append(copy(self.neurons))
 
     def _update_weights(self, max_out, choice):
         """Use the policy to update the agent weights
