@@ -1,6 +1,5 @@
 from flatland import Flatland
 from operator import itemgetter
-from collections import defaultdict
 from copy import copy
 import matplotlib.pyplot as plt
 import random
@@ -365,7 +364,8 @@ class SupervisedAgent(Agent):
         plt.show()
 
 
-class QAgent(SupervisedAgent):
+class ReinforcementAgent(SupervisedAgent):
+    """Agent based on reinforcement learning"""
 
     def __init__(self, learning_rate, discount, decay):
         SupervisedAgent.__init__(self, learning_rate)
@@ -389,7 +389,14 @@ class QAgent(SupervisedAgent):
         self._prev_q = max_q
 
         if self._r == -100:
-            self._update_weights(max_q, choice)
+            print("Does this ever happen?")
+
+    def _into_wall(self):
+        i = self._prev_out
+        for j in range(len(self.neurons)):
+            input_n = self._prev_neurons[j]
+            delta = -100 + self.discount * (-100) - self._prev_q
+            self.weights[(i, j)] += self.learning_rate * input_n * delta
 
     def new_environment(self, new_env):
         """Sets a new Flatland environment for the agent"""
@@ -411,10 +418,10 @@ class QAgent(SupervisedAgent):
         self.learning_rate *= self.decay
 
 
-class EnhancedAgent(QAgent):
+class EnhancedAgent(ReinforcementAgent):
 
     def __init__(self, learning_rate, discount, decay):
-        QAgent.__init__(self, learning_rate, discount, decay)
+        ReinforcementAgent.__init__(self, learning_rate, discount, decay)
         self.neurons = [0 for _ in range(36)]
         pairs = [(i, j) for i in range(3) for j in range(36)]
         self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
@@ -484,7 +491,7 @@ class EnhancedAgent(QAgent):
 
 
 if __name__ == '__main__':
-    agent = QAgent(0.06, 0.99, 1)
+    agent = ReinforcementAgent(0.01, 0.99, 1)
     # agent = GreedyAgent()
     agent.train(50, False)
     agent.new_environment(Flatland(10, 10))
