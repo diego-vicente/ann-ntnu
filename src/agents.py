@@ -55,6 +55,9 @@ class Agent():
         self.steps = []
         # Clear the rewards from the previous solution
         self.reward = 0
+        # Clear the stories
+        self.output_story = []
+        self.neuron_story = []
 
     def move_to(self, direction):
         """Moves the agent to the cell (x,y) in its actual environment
@@ -234,6 +237,8 @@ class SupervisedAgent(Agent):
         self.neurons = [0 for _ in range(12)]
         pairs = [(i, j) for i in range(3) for j in range(12)]
         self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
+        self.output_story = []
+        self.neuron_story = []
 
     def _update_neurons(self):
         """Fill the neuron array with new information of the environment"""
@@ -253,6 +258,8 @@ class SupervisedAgent(Agent):
             for j in range(len(self.neurons)):
                 self.outputs[i][0] += self.weights[(i, j)] * self.neurons[j]
 
+        self.neuron_story.append(copy(self.neurons))
+
     def _update_weights(self, max_out, choice):
         """Use the policy to update the agent weights
 
@@ -267,14 +274,16 @@ class SupervisedAgent(Agent):
         getvalue = itemgetter(0)
         output_values = list(map(getvalue, self.outputs))
         sum_exp = sum([math.exp(n - max_out) for n in output_values])
-        # Update each of the weights
 
+        # Update each of the weights
         idx = output_values.index(max_out)
         for j in range(len(self.neurons)):
             input_n = self.neurons[j]
             output_n = self.outputs[idx][0]
             delta = correct - (math.exp(output_n - max_out / sum_exp))
             self.weights[(idx, j)] += self.learning_rate * input_n * delta
+
+        self.output_story.append(idx)
 
     def _learn_step(self):
         """Chooses a new movement and learns from it
@@ -384,6 +393,9 @@ class ReinforcementAgent(SupervisedAgent):
         self._prev_neurons = copy(self.neurons)
         self._prev_q = max_q
 
+        self.neuron_story.append(copy(self.neurons))
+        self.output_story.append(copy(self._prev_out))
+
         if self._r == -100:
             print("Does this ever happen?")
 
@@ -412,6 +424,10 @@ class ReinforcementAgent(SupervisedAgent):
         self._r = 0
         # Decay the learning rate
         self.learning_rate *= self.decay
+        # Clear the stories
+        self.output_story = []
+        self.neuron_story = []
+
 
 
 class EnhancedAgent(ReinforcementAgent):

@@ -2,6 +2,7 @@ from flatland import Flatland
 from agents import GreedyAgent, SupervisedAgent, ReinforcementAgent
 import pygame
 
+
 class Simulation():
     """A visual representation of the path taken by an Agent in a Flatland
 
@@ -17,6 +18,7 @@ class Simulation():
     _eaten_poison = (255, 100, 100)
     _agent = (230, 230, 0)
     _wall = (200, 200, 200)
+    _neuron_on = (100, 100, 200)
 
     # Grid coordinates and other parameters of size
     _grid_o = (20, 20)
@@ -85,6 +87,7 @@ class Simulation():
                                 self._output_n_o[1] + i * self._output_spacing)
 
         self._step = 1
+        self._seeing_brain = False
         self._avg = None
 
     def start(self):
@@ -123,6 +126,9 @@ class Simulation():
 
     def _draw_grid(self):
         """Draws all the components in the window at a given time"""
+        # Update the state boolean
+        self._seeing_brain = False
+        
         # Draw a white background
         self.screen.fill(self._white)
 
@@ -180,13 +186,19 @@ class Simulation():
         """Displays next step in the simulation (if any)"""
         if (self._step < len(self.agent.steps)):
             self._step += 1
-            self._draw_grid()
+            if self._seeing_brain:
+                self._draw_brain()
+            else:
+                self._draw_grid()
 
     def previous_step(self):
         """Displays previous step in the simulation (if any)"""
         if (self._step > 1):
             self._step -= 1
-            self._draw_grid()
+            if self._seeing_brain:
+                self._draw_brain()
+            else:
+                self._draw_grid()
 
     def run(self):
         """Run the complete execution automatically"""
@@ -206,7 +218,7 @@ class Simulation():
                 result = self.agent.learn(50, False)
                 episode_rewards.append(result)
             self._avg = sum(episode_rewards)/100
-            self._draw_brain()
+            self._draw_brain(training=True)
 
     def _new_run(self):
         self.env = Flatland(10, 10)
@@ -216,8 +228,12 @@ class Simulation():
         self._step = 1
         self._draw_grid()
 
-    def _draw_brain(self):
+    def _draw_brain(self, training=False):
         """Displays the ANN representation in the window"""
+        # Update the state boolean
+        self._seeing_brain = True
+        last = self._step >= len(self.agent.output_story)
+
         # Draw a white background
         self.screen.fill(self._white)
 
@@ -229,6 +245,15 @@ class Simulation():
                       self._input_o[1] + i * self._input_spacing)
             self.screen.blit(neuron, origin)
 
+            # Render the current neural perception
+            triggered = self.agent.neuron_story[self._step-1][i]
+            if triggered and not training and not last:
+                origin = (self._input_n_o[0],
+                          self._input_n_o[1] + i * self._input_spacing)
+                pygame.draw.circle(self.screen, self._neuron_on,
+                                   origin, 10, 0)
+
+        output = self.agent.output_story[self._step-1]
         for i in range(len(self.agent.outputs)):
             # Render output neuron text
             neuron = self._font.render(self._output_meanings[i],
@@ -236,6 +261,12 @@ class Simulation():
             origin = (self._output_o[0],
                       self._output_o[1] + i * self._output_spacing)
             self.screen.blit(neuron, origin)
+
+            if i == output and not training and not last:
+                origin = (self._output_n_o[0],
+                          self._output_n_o[1] + i * self._output_spacing)
+                pygame.draw.circle(self.screen, self._neuron_on,
+                                   origin, 10, 0)
 
         # Normalize weights to print the lines accordingly
         max_v = max(self.agent.weights.values())
