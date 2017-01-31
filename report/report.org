@@ -2,8 +2,9 @@
 #+AUTHOR: Diego Vicente Martín 
 #+EMAIL: diegovi@stud.ntnu.no
 #+LaTeX_CLASS: article
-#+LaTeX_CLASS_OPTIONS: [10pt]
-#+LATEX_HEADER: \usepackage[margin=2cm]{geometry}
+#+LaTeX_CLASS_OPTIONS: [9pt]
+#+LATEX_HEADER: \usepackage[margin=1cm]{geometry}
+#+LATEX_HEADER: \pagenumbering{gobble}
 #+LANGUAGE: en
 #+OPTIONS: toc:nil date:nil H:1
 
@@ -26,7 +27,9 @@ files:
   representation of the last execution of an agent using ~pygame~.
 - ~run.py~: prepares a demo execution to show the different agents.
 
-@@comment: Insert screenshot@@ 
+#+CAPTION: Flatland environment and weights representation, with an input-output
+#+ATTR_LATEX: :height 5cm
+[[./img/input.png]]
 
 ** *Describe how your baseline agent decides whether to move left, forward or right.* 
 
@@ -36,24 +39,11 @@ other choice he goes to a cell with poison. To make it perform better, if there
 are several cells with the target content (i.e food front and left), the agent
 always chooses to go front, to prevent loops due to empty cells.
 
-** *What is the average score achieved by your baseline agent over many trials?*  
-
-After 1000 executions, the average reward obtained by ~GreedyAgent~ is 20.335.
-
 * Supervised Learning of the Neural Agent
 
 ** *Include a few lines of code from the part of your program where the delta values are calculated and explain how this code implements Equation 3.*
 
 #+BEGIN_SRC python
-# Learn from the last step taken
-policy = self.policy_movement()
-correct = 1 if (policy == choice) else 0
-
-# Compute common part of delta_i
-getvalue = itemgetter(0)
-output_values = list(map(getvalue, self.outputs))
-sum_exp = sum([math.exp(n - max_out) for n in output_values])
-
 # Update each of the weights
 idx = output_values.index(max_out)
 for j in range(len(self.neurons)):
@@ -63,38 +53,49 @@ for j in range(len(self.neurons)):
     self.weights[(idx, j)] += self.learning_rate * input_n * delta
 #+END_SRC
 
-In this snippet, we can see how first we compute the policy greedy movement, in
-order to guess the value of $correct(i)$. Afterwards, we compute the part that
-is common for all neurons in $\delta_i$, that is $\sum e^{y_k}$. Then, for all
-the actions related to the action chosen, we update the weights using the
-Widrow-Hoff rule.
-
-** *Plot how your agent’s performance develops as the number of training rounds increases.*
-
-@@comment: Insert screenshot@@
+In the snippet above, part of ~SupervisedAgent~, we can see how we the delta
+rule is implemented to take into account if the policy action was succesfully
+chosen or not.
 
 * Reinforcement Learning of the Neural Agent
 
-** *Include a few lines of code from the part of your program where the delta values (di) are calculated and explain how this code implements Equation 5.*
+** *Include a few lines of code from the part of your program where the delta values ($\delta_{i}$) are calculated and explain how this code implements Equation 5.*
 
 #+BEGIN_SRC python
-# Update the values
-getvalue = itemgetter(0)
-output_values = list(map(getvalue, self.outputs))
-q = self.qtable[self._sa]
-delta = self._r + self.discount * max_q_prime - q
-
-# Update the Q-table entry for Q(s, a)
-self.qtable[self._sa] += self.learning_rate * delta
-
-# Update weights
-i = self._old_idx
+i = self._prev_out
 for j in range(len(self.neurons)):
-    input_n = self._sa[j]
+    input_n = self._prev_neurons[j]
+    delta = self._r + self.discount * max_q - self._prev_q
     self.weights[(i, j)] += self.learning_rate * input_n * delta
 #+END_SRC
 
-In this snippet of ~QAgent~, we can see how we first compute the delta function
-and then we use it to update the appropriate entry ($Q(s,a)$). Then, we update
-the weights of the previous turn using the delta rule for $(s,a)$. After this
-snippet, the values are updated with the ones in this turn.
+In this snippet, part of ~ReinforcementAgent~, we can see how the update of
+weights is implemented using the attributes stored by the agent about the
+previous turn. That means that the agent updates with a delay of one turn, and
+this has to be taken into account when the run ends (specially when running
+into walls). This is solved by forcing the last update of the agent. 
+
+* Analysis
+  
+** *List all of the weights in the neural network. Make sure this is readable, e.g. by grouping the weights by output neuron and input sensor. You may also visualize the network in a graph (optional).*
+
+As we can see in Figure 1, the weights of the network are visible when using
+the graphical representation the whole time. The color of each weight indicates
+how negative (red) or how positive (green) the weight is.
+
+** *How did your agents’ results progress from task 1 (baseline agent) to task 2 (supervised), task 3 (reinforcement) and task 4 (reinforcement with extended sensor range)? Was this as expected?*
+
+The baseline agent performs in a deterministic way, so it is easy for it to
+perform on an average of 20. The supervised agent, using the adequate learning
+rate, is the fastest learning but its performance is rarely better than the
+baseline one, as expected since it learnt from the baseline. On the other hand,
+even though it sometimes struggles to learn properly the task (due to
+inconvenient worlds in the beginning of the learning phase), the reinforcement
+agent is able to perform slightly better than the baseline one
+sometimes. Finally, the best one performing is the enhanced one, since it is
+able to interpret more information from the environment, which also makes it
+the slowest one to learn.
+
+#+CAPTION: Average scores obtained by each of the agents in 50 rounds of training
+#+ATTR_LATEX: :height 7cm
+[[./img/agents.png]]
