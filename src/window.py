@@ -2,7 +2,6 @@ from flatland import Flatland
 from agents import GreedyAgent, SupervisedAgent, ReinforcementAgent
 import pygame
 
-
 class Simulation():
     """A visual representation of the path taken by an Agent in a Flatland
 
@@ -238,19 +237,21 @@ class Simulation():
                       self._output_o[1] + i * self._output_spacing)
             self.screen.blit(neuron, origin)
 
+        # Normalize weights to print the lines accordingly
+        max_v = max(self.agent.weights.values())
+        min_v = min(self.agent.weights.values())
+        bound = max_v if (max_v > abs(min_v)) else -min_v
+        factor = 255.0 / bound
+        normalized_weights = {k: round(v*factor) for k, v in
+                              self.agent.weights.items()}
+
         for i in range(len(self.agent.outputs)):
             for j in range(len(self.agent.neurons)):
-                weight = round(self.agent.weights[i, j] * 100)
+                weight = round(normalized_weights[i, j])
                 if weight > 0:
-                    if weight < 255:
-                        color = (255 - weight, 255, 255 - weight)
-                    else:
-                        color = (0, 255, 0)
+                    color = (255 - weight, 255, 255 - weight)
                 else:
-                    if weight > -255:
-                        color = (255, 255 + weight, 255 + weight)
-                    else:
-                        color = (255, 0, 0)
+                    color = (255, 255 + weight, 255 + weight)
                 start = self._inputs[j]
                 end = self._outputs[i]
                 pygame.draw.lines(self.screen, color, False,

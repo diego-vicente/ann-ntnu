@@ -357,11 +357,7 @@ class SupervisedAgent(Agent):
             avg = sum(episode_rewards)/100
             print('Episode {}: {}'.format(i, avg))
             rewards.append(avg)
-
-        plt.figure()
-        plt.plot(rewards)
-        plt.ylabel('Average Rewards')
-        plt.show()
+        return rewards
 
 
 class ReinforcementAgent(SupervisedAgent):
@@ -491,7 +487,7 @@ class EnhancedAgent(ReinforcementAgent):
 
 
 if __name__ == '__main__':
-    agent = ReinforcementAgent(0.01, 0.99, 1)
+    agent = ReinforcementAgent(0.005, 0.99, 1)
     # agent = GreedyAgent()
     agent.train(50, False)
     agent.new_environment(Flatland(10, 10))
