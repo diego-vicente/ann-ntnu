@@ -113,6 +113,8 @@ class Simulation():
                         self.visual_training()
                     elif event.key == pygame.K_g:
                         self._draw_grid()
+                    elif event.key == pygame.K_n:
+                        self._new_run()
 
     def _points_to_coordinates(self, points):
         """Translate a list of points to coordinates in Simulation canvas"""
@@ -205,6 +207,14 @@ class Simulation():
             avg = sum(episode_rewards)/100
             self._draw_brain()
 
+    def _new_run(self):
+        self.env = Flatland(10, 10)
+        # agent.train(20, False)
+        self.agent.new_environment(self.env)
+        self.agent.learn(50, False)
+        self._step = 1
+        self._draw_grid()
+
     def _draw_brain(self):
         """Displays the ANN representation in the window"""
         # Draw a white background
@@ -218,10 +228,6 @@ class Simulation():
                       self._input_o[1] + i * self._input_spacing)
             self.screen.blit(neuron, origin)
 
-            # Render output neuron dot
-            pygame.draw.circle(self.screen, self._black,
-                               self._inputs[i], 5, 0)
-
         for i in range(len(self.agent.outputs)):
             # Render output neuron text
             neuron = self._font.render(self._output_meanings[i],
@@ -230,16 +236,12 @@ class Simulation():
                       self._output_o[1] + i * self._output_spacing)
             self.screen.blit(neuron, origin)
 
-            # Render output neuron dot
-            pygame.draw.circle(self.screen, self._black,
-                               self._outputs[i], 5, 0)
-
         for i in range(len(self.agent.outputs)):
             for j in range(len(self.agent.neurons)):
-                weight = round(self.agent.weights[i, j] * 3)
+                weight = round(self.agent.weights[i, j] * 100)
                 if weight > 0:
-                    if weight < 255:
-                        color = (255 - weight, 255, 255 - weight)
+                    if weight * 15 < 255:
+                        color = (255 - weight * 5, 255, 255 - weight * 5)
                     else:
                         color = (0, 255, 0)
                 else:
@@ -256,13 +258,14 @@ class Simulation():
 
 
 def main():
-    agent = QAgent(0.01, 0.99, 1)
+    agent = QAgent(0.05, 0.99, 1)
     env = Flatland(10, 10)
-    # agent.train(20, False)
+    agent.train(50, False)
     agent.new_environment(env)
     agent.learn(50, True)
     simulation = Simulation(agent)
-    simulation.start()
+    #simulation.start()
+    print(agent.weights)
 
 
 if __name__ == "__main__":
