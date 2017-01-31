@@ -1,7 +1,7 @@
 from flatland import Flatland
 from operator import itemgetter
 from collections import defaultdict
-from copy import deepcopy
+from copy import copy
 import matplotlib.pyplot as plt
 import random
 import math
@@ -77,6 +77,25 @@ class Agent():
         end = mov_reward == -100
         return (x, y), end
 
+    def move_back(self, direction):
+        """Moves the agent back from a certain cell, resetting the board.
+
+        This movements is not valid and should only be used when evaluating the
+        reinforced agent in order to obtain Q(s',a')
+        """
+        # Update the position of the agent in the environment
+        x = self.position[0] - direction[0]
+        y = self.position[1] - direction[1]
+        mov_reward = self.environment.move_agent(x, y)
+        # Update the rewards, position and direction value
+        self._r = mov_reward
+        self.reward += mov_reward
+        self.position = (x, y)
+        self.facing = direction
+        # Check if the agent just ran into a wall
+        end = mov_reward == -100
+        return (x, y), end
+
     def look_at(self, direction):
         """Return the value of the cell in a given direction"""
         return self.environment.get_cell(self.position[0] + direction[0],
@@ -90,7 +109,7 @@ class Agent():
         order) and the direction associated to each of the cells.
         """
 
-        front = deepcopy(self.facing)
+        front = copy(self.facing)
         if (front == Direction.N):
             left = Direction.W
             right = Direction.E
@@ -335,7 +354,6 @@ class SupervisedAgent(Agent):
                 env = Flatland(10, 10)
                 self.new_environment(env)
                 result = self.learn(50, output)
-                print(result)
                 episode_rewards.append(result)
             avg = sum(episode_rewards)/100
             print('Episode {}: {}'.format(i, avg))
@@ -353,93 +371,26 @@ class QAgent(SupervisedAgent):
         SupervisedAgent.__init__(self, learning_rate)
         self.discount = discount
         self.decay = decay
-        self.qtable = defaultdict(float)
-        self._sa = None
-        self._sa_prime = None
 
-    def _update_weights(self, max_out, choice):
-        """Update the weights using the Q-table"""
+    def _update_weights(self, max_q, choice):
 
-        # Check it's not the first execution
-        if self._sa is not None:
-
-            # _sa is already filled, use _sa_prime instead.
-            self._sa_prime = tuple(deepcopy(self.neurons) + list(choice))
-            max_q_prime, _ = self.max_q()
-
-            # Update the values
-            getvalue = itemgetter(0)
-            output_values = list(map(getvalue, self.outputs))
-            q = self.qtable[self._sa]
-            delta = self._r + self.discount * max_q_prime - q
-
-            # Update the Q-table entry for Q(s, a)
-            self.qtable[self._sa] += self.learning_rate * delta
-
+        if self._prev_neurons is not None:
+            i = self._prev_out
             for j in range(len(self.neurons)):
-                input_n = self._sa[j]
-                i = self._old_idx
+                input_n = self._prev_neurons[j]
+                delta = self._r + self.discount * max_q - self._prev_q
                 self.weights[(i, j)] += self.learning_rate * input_n * delta
-
-            # Update values for backpropagations
-            self._old_idx = output_values.index(max_out)
-            self._old_r = self._r
-
-            # Turn _sa_prime into _sa for the next step
-            self._sa = deepcopy(self._sa_prime)
-
-        else:
-            # _sa is the list containing both neurons and action to be used
-            # as hash. We must fill them first
-            self._sa = tuple(deepcopy(self.neurons) + list(choice))
-            getvalue = itemgetter(0)
-            output_values = list(map(getvalue, self.outputs))
-            self._old_idx = output_values.index(max_out)
-            self._old_r = self._r
-
-    # Overriden to ensure that running into a wall is reflected in qtable
-    def _into_wall(self):
-        # Check it's not the first execution
-        if self._sa is not None and self._sa_prime is not None:
-
-            # Update the values
-            delta = -100
-
-            # Update the Q-table entry for Q(s, a)
-            self.qtable[self._sa] += self.learning_rate * delta
-
-            for j in range(len(self.neurons)):
-                input_n = self._sa_prime[j]
-                i = self._old_idx
-                self.weights[(i, j)] += self.learning_rate * input_n * delta
-
-    def max_q(self):
-
-        front = deepcopy(self.facing)
-        if (front == Direction.N):
-            left = Direction.W
-            right = Direction.E
-        elif (front == Direction.E):
-            left = Direction.N
-            right = Direction.S
-        elif (front == Direction.S):
-            left = Direction.E
-            right = Direction.W
-        elif (front == Direction.W):
-            left = Direction.S
-            right = Direction.N
-
-        # print(front, left, right, self.neurons)
-
-        hashes = [tuple(self.neurons + list(d)) for d in [front, left, right]]
-        outputs = [(self.qtable[i], i) for i in hashes]
 
         getvalue = itemgetter(0)
-        max_q = max(outputs, key=getvalue)
+        output_values = list(map(getvalue, self.outputs))
+        self._prev_out = output_values.index(max_q)
+        self._prev_r = self._r
+        self._prev_neurons = copy(self.neurons)
+        self._prev_q = max_q
 
-        return max_q
+        if self._r == -100:
+            self._update_weights(max_q, choice)
 
-    # Override the method to clean the aux variables in the agent
     def new_environment(self, new_env):
         """Sets a new Flatland environment for the agent"""
         # Change the environment
@@ -451,11 +402,11 @@ class QAgent(SupervisedAgent):
         # Clear the rewards from the previous solution
         self.reward = 0
         # Clear the state/action variables to maintain integrity
-        self._sa = None
-        self._sa_prime = None
-        self._old_idx = None
+        self._prev_q = None
+        self._prev_r = None
+        self._prev_out = None
+        self._prev_neurons = None
         self._r = 0
-        self._old_r = 0
         # Decay the learning rate
         self.learning_rate *= self.decay
 
@@ -476,7 +427,7 @@ class EnhancedAgent(QAgent):
         order) and the direction associated to each of the cells.
         """
 
-        front = deepcopy(self.facing)
+        front = copy(self.facing)
         if (front == Direction.N):
             front1 = Direction.NN
             front2 = Direction.NNN
@@ -533,11 +484,13 @@ class EnhancedAgent(QAgent):
 
 
 if __name__ == '__main__':
-    agent = EnhancedAgent(0.01, 0.99, 1)
-    agent.train(20, False)
+    agent = QAgent(0.06, 0.99, 1)
+    # agent = GreedyAgent()
+    agent.train(50, False)
     agent.new_environment(Flatland(10, 10))
-    agent.learn(50, True)
-    #for line in agent.qtable:
+    rewards = 0
+
+    # for line in agent.qtable:
     #    print(line, agent.qtable[line])
     for line in agent.weights:
         print(line, agent.weights[line])
