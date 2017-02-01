@@ -46,7 +46,11 @@ def main():
 
 
 def compare_agents(rounds):
-    """Run each of the agents, train them and compare them in a plot"""
+    """Run each of the agents, train them and compare them in a plot
+
+    Arguments:
+    rounds -- Number of training rounds to run in each agent
+    """
     # Greedy agent measure
     agent_g = GreedyAgent()
     sum_reward = 0
@@ -90,7 +94,10 @@ def compare_agents(rounds):
 
 
 def run_simulation(agent, training):
-    """Run the graphical simulation after training the agent"""
+    """Run the graphical simulation after training the agent
+
+    Arguments:
+    agent -- type of the agent to launch in the simulation"""
     if agent == 'g':
         agent = GreedyAgent()
     elif agent == 's':
