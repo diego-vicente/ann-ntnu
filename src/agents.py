@@ -334,6 +334,7 @@ class SupervisedAgent(Agent):
             self.weights[(idx, j)] += self.learning_rate * input_n * delta
 
         self.output_story.append(idx)
+        self.neuron_story.append(copy(self.neurons))
 
     def _learn_step(self):
         """Chooses a new movement and learns from it
