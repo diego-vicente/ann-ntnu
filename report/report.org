@@ -2,17 +2,18 @@
 #+AUTHOR: Diego Vicente Martín 
 #+EMAIL: diegovi@stud.ntnu.no
 #+LaTeX_CLASS: article
-#+LaTeX_CLASS_OPTIONS: [9pt]
+#+LaTeX_CLASS_OPTIONS: [8pt]
 #+LATEX_HEADER: \usepackage[margin=1cm]{geometry}
 #+LATEX_HEADER: \pagenumbering{gobble}
+#+LATEX_HEADER: \usepackage{wrapfig}
 #+LANGUAGE: en
-#+OPTIONS: toc:nil date:nil H:1
+#+OPTIONS: toc:nil date:nil H:1 
 
 * Flatland & Baseline Agent
 
 ** *Provide a brief overview of your implementation. Include a screenshot of your Flatland visualization.* 
 
-The implementation is done in Python, and all the important source code files
+The implementation is done in Python 3, and all the important source code files
 are present in the ~src/~ folder. In there, we can find several different
 files: 
 
@@ -28,7 +29,7 @@ files:
 - ~run.py~: prepares a demo execution to show the different agents.
 
 #+CAPTION: Flatland environment and weights representation, with an input-output
-#+ATTR_LATEX: :height 5cm
+#+ATTR_LATEX: :height 4cm
 [[./img/input.png]]
 
 ** *Describe how your baseline agent decides whether to move left, forward or right.* 
@@ -45,12 +46,12 @@ always chooses to go front, to prevent loops due to empty cells.
 
 #+BEGIN_SRC python
 # Update each of the weights
-idx = output_values.index(max_out)
+i = output_values.index(max_out)
 for j in range(len(self.neurons)):
     input_n = self.neurons[j]
-    output_n = self.outputs[idx][0]
+    output_n = self.outputs[i][0]
     delta = correct - (math.exp(output_n - max_out / sum_exp))
-    self.weights[(idx, j)] += self.learning_rate * input_n * delta
+    self.weights[(i, j)] += self.learning_rate * input_n * delta
 #+END_SRC
 
 In the snippet above, part of ~SupervisedAgent~, we can see how we the delta
@@ -81,9 +82,31 @@ into walls). This is solved by forcing the last update of the agent.
 
 As we can see in Figure 1, the weights of the network are visible when using
 the graphical representation the whole time. The color of each weight indicates
-how negative (red) or how positive (green) the weight is.
+how negative (red) or how positive (green) the weight is. In case a higher
+detail is needed, pressing ~w~ in the visual simulation will print in the
+terminal the weights dictionary in a readable way.
+
+** *Select a few (at least 5) input situations and describe how the network responds (output values and which action is selected). Account for how the network generates its behavior (e.g. any structure you might find in the weights, etc.).*
+
+This can be done by checking the neuron representation live in the graphical
+execution. The neurons that are triggered appear marked with a blue dot, so the
+weights connecting on neurons are the highest weights activated in each
+moment. Some example situations are:
+- Food in front, food right, food left: the agent chooses front, has learnt
+  that can run into loops.
+- Empty in front, empty right, food left: the agent will almost always choose
+  the food since it is positive reinforcement.
+- Poison in front, food left, food right: the agent can choose right or left,
+  depending on its recent movements. Knows that poison is bad.
+- Poison in front, poison left, empty right: chooses right to dodge poison.
+- poison in front, wall left, poison right: will choose on of the two poisons,
+  since it has learnt that poison is bad reinforcement but wall is far worse.
 
 ** *How did your agents’ results progress from task 1 (baseline agent) to task 2 (supervised), task 3 (reinforcement) and task 4 (reinforcement with extended sensor range)? Was this as expected?*
+
+#+CAPTION: Average scores obtained by each of the agents in 50 rounds of training
+#+ATTR_LATEX: :height 4cm
+[[./img/agents.png]]
 
 The baseline agent performs in a deterministic way, so it is easy for it to
 perform on an average of 20. The supervised agent, using the adequate learning
@@ -96,6 +119,3 @@ sometimes. Finally, the best one performing is the enhanced one, since it is
 able to interpret more information from the environment, which also makes it
 the slowest one to learn.
 
-#+CAPTION: Average scores obtained by each of the agents in 50 rounds of training
-#+ATTR_LATEX: :height 7cm
-[[./img/agents.png]]
