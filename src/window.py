@@ -317,6 +317,7 @@ class Simulation():
             self._draw_window(training=True)
 
     def _new_run(self):
+        """Set a new environment for the agent in the visual mode"""
         self.env = Flatland(10, 10)
         # agent.train(20, False)
         self.agent.new_environment(self.env)
@@ -326,17 +327,3 @@ class Simulation():
             self.agent.learn(50, False)
         self._step = 1
         self._draw_window()
-
-
-def main():
-    # agent = EnhancedAgent(0.005, 0.99, 1)
-    agent = GreedyAgent()
-    env = Flatland(10, 10)
-    agent.new_environment(env)
-    agent.run(50, False)
-    simulation = Simulation(agent)
-    simulation.start()
-
-
-if __name__ == "__main__":
-    main()
