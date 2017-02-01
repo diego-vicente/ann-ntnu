@@ -230,6 +230,49 @@ class SupervisedAgent(Agent):
     weights -- Dictionary containing each of the (i,j) connections
     outputs -- Triple containing the sum of input neurons and direction
     """
+
+    # Dictionaries with the neuron input and output meanings
+    _input_strings = {0: 'E front',
+                      1: 'W front',
+                      2: 'F front',
+                      3: 'P front',
+                      4: 'E left',
+                      5: 'W left',
+                      6: 'F left',
+                      7: 'P left',
+                      8: 'E right',
+                      9: 'W right',
+                      10: 'F right',
+                      11: 'P right',
+                      12: 'E front (2)',
+                      13: 'W front (2)',
+                      14: 'F front (2)',
+                      15: 'P front (2)',
+                      16: 'E front (3)',
+                      17: 'W front (3)',
+                      18: 'F front (3)',
+                      19: 'P front (3)',
+                      20: 'E left (2)',
+                      21: 'W left (2)',
+                      22: 'F left (2)',
+                      23: 'P left (2)',
+                      24: 'E left (3)',
+                      25: 'W left (3)',
+                      26: 'F left (3)',
+                      27: 'P left (3)',
+                      28: 'E right (2)',
+                      29: 'W right (2)',
+                      30: 'F right (2)',
+                      31: 'P right (2)',
+                      32: 'E right (3)',
+                      33: 'W right (3)',
+                      34: 'F right (3)',
+                      35: 'P right (3)'}
+
+    _output_strings = {0: 'Move forwards',
+                       1: 'Move left',
+                       2: 'Move right'}
+
     def __init__(self, learning_rate):
         Agent.__init__(self)
         self.learning_rate = learning_rate
@@ -238,6 +281,14 @@ class SupervisedAgent(Agent):
         self.weights = {(i, j): random.uniform(0, 0.001) for (i, j) in pairs}
         self.output_story = []
         self.neuron_story = []
+
+    def print_weights(self):
+        """Print the weights values in a readable way"""
+        for i in range(len(self.outputs)):
+            for j in range(len(self.neurons)):
+                print('{} - {}: {}'.format(self._input_strings[j],
+                                           self._output_strings[i],
+                                           self.weights[i, j]))
 
     def _update_neurons(self):
         """Fill the neuron array with new information of the environment"""
@@ -426,7 +477,6 @@ class ReinforcementAgent(SupervisedAgent):
         self.neuron_story = []
 
 
-
 class EnhancedAgent(ReinforcementAgent):
 
     def __init__(self, learning_rate, discount, decay):
@@ -503,10 +553,4 @@ if __name__ == '__main__':
     agent = ReinforcementAgent(0.005, 0.99, 1)
     # agent = GreedyAgent()
     agent.train(50, False)
-    agent.new_environment(Flatland(10, 10))
-    rewards = 0
-
-    # for line in agent.qtable:
-    #    print(line, agent.qtable[line])
-    for line in agent.weights:
-        print(line, agent.weights[line])
+    agent.print_weights()
