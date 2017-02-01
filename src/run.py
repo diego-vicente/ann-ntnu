@@ -60,18 +60,25 @@ def compare_agents(rounds):
     greedy_avg = sum_reward/trials
     print('Average score obtained: ', greedy_avg)
     greedy_score = [greedy_avg for _ in range(rounds)]
+    print()
 
+    print('Training the SupervisedAgent:')
     # Supervised agent measure
     agent_s = SupervisedAgent(0.01)
     supervised_score = agent_s.train(rounds, False)
+    print()
 
+    print('Training the ReinforcementAgent:')
     # Reinforcement agent measure
     agent_r = ReinforcementAgent(0.005, 0.99, 1)
     reinforced_score = agent_r.train(rounds, False)
+    print()
 
+    print('Training the EnhancedAgent:')
     # Enhanced agent measure
     agent_e = EnhancedAgent(0.005, 0.99, 1)
     enhanced_score = agent_e.train(rounds, False)
+    print()
 
     plt.figure()
     plt.plot(greedy_score, label='Greedy Agent', ls='dashed')
