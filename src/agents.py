@@ -284,11 +284,13 @@ class SupervisedAgent(Agent):
 
     def print_weights(self):
         """Print the weights values in a readable way"""
+        print('Agent weights:')
         for i in range(len(self.outputs)):
             for j in range(len(self.neurons)):
                 print('{} - {}: {}'.format(self._input_strings[j],
                                            self._output_strings[i],
                                            self.weights[i, j]))
+        print('---')
 
     def _update_neurons(self):
         """Fill the neuron array with new information of the environment"""

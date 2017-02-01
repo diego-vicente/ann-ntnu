@@ -1,5 +1,5 @@
 from flatland import Flatland
-from agents import GreedyAgent, SupervisedAgent, ReinforcementAgent
+from agents import GreedyAgent, EnhancedAgent
 import pygame
 
 
@@ -29,10 +29,10 @@ class Simulation():
     _output_spacing = 170
 
     # Hardcoded meanings of each input neuron
-    _input_meanings = {0: 'E in front',
-                       1: 'W in front',
-                       2: 'F in front',
-                       3: 'P in front',
+    _input_meanings = {0: 'E front',
+                       1: 'W front',
+                       2: 'F front',
+                       3: 'P front',
                        4: 'E left',
                        5: 'W left',
                        6: 'F left',
@@ -40,7 +40,31 @@ class Simulation():
                        8: 'E right',
                        9: 'W right',
                        10: 'F right',
-                       11: 'P right'}
+                       11: 'P right',
+                       12: 'E front (2)',
+                       13: 'W front (2)',
+                       14: 'F front (2)',
+                       15: 'P front (2)',
+                       16: 'E front (3)',
+                       17: 'W front (3)',
+                       18: 'F front (3)',
+                       19: 'P front (3)',
+                       20: 'E left (2)',
+                       21: 'W left (2)',
+                       22: 'F left (2)',
+                       23: 'P left (2)',
+                       24: 'E left (3)',
+                       25: 'W left (3)',
+                       26: 'F left (3)',
+                       27: 'P left (3)',
+                       28: 'E right (2)',
+                       29: 'W right (2)',
+                       30: 'F right (2)',
+                       31: 'P right (2)',
+                       32: 'E right (3)',
+                       33: 'W right (3)',
+                       34: 'F right (3)',
+                       35: 'P right (3)'}
 
     # Hardcoded meanings of each output neuron
     _output_meanings = {0: 'Move forwards',
@@ -51,21 +75,33 @@ class Simulation():
         """Creates a new Simulation given an agent and a environment"""
         self.agent = agent
         self.env = agent.environment
+        self._only_grid = isinstance(self.agent, GreedyAgent)
         # Compute window size
         self.height = (self.env.rows + 2) * self._cell_size + 2*self._grid_o[1]
         self.width = (self.env.cols + 2) * self._cell_size + 2*self._grid_o[0]
-        # Compute the brain size and update window
-        self._brain_o = (self.height, 20)
-        self.height *= 2
-        self._input_o = self._brain_o
-        self._input_n_o = (self._input_o[0] + 90, self._input_o[1] + 5)
-        self._output_o = (self._input_o[0] + 350, 85)
-        self._output_n_o = (self._output_o[0] - 20, 90)
-        self._avg_o = (self._output_n_o[0], 480)
+        if not self._only_grid:
+            # Compute the brain size and update window
+            self._brain_o = (self.height, 20)
+            self.height *= 2
+            self._input_o = self._brain_o
+            self._input_n_o = (self._input_o[0] + 90, self._input_o[1] + 5)
+            self._output_o = (self._input_o[0] + 350, 85)
+            self._output_n_o = (self._output_o[0] - 20, 90)
+            self._avg_o = (self._output_n_o[0], 480)
+            # Fine tune the spacing:
+            if isinstance(agent, EnhancedAgent):
+                self._input_spacing = round(self._input_spacing / 3)
+                self._input_o = (self._brain_o[0], 10)
+                self._input_n_o = (self._input_o[0] + 90, self._input_o[1] + 5)
+                self._output_o = (self._input_o[0] + 350, 85)
+                self._output_n_o = (self._output_o[0] - 20, 90)
 
         # Init the font module
         pygame.init()
         self._font = pygame.font.SysFont("Consolas", 20)
+
+        self._step = 1
+        self._avg = None
 
         # Populate grid centers dictionary
         self._grid = {}
@@ -78,6 +114,9 @@ class Simulation():
                 self._grid[i, j] = (int(self._grid[i, j][0]),
                                     int(self._grid[i, j][1]))
 
+        if self._only_grid:
+            return
+
         # Populate the input & output neurons dictionaries
         self._inputs = {}
         for i in range(len(self.agent.neurons)):
@@ -88,10 +127,6 @@ class Simulation():
         for i in range(3):
             self._outputs[i] = (self._output_n_o[0],
                                 self._output_n_o[1] + i * self._output_spacing)
-
-        self._step = 1
-        self._seeing_brain = False
-        self._avg = None
 
     def start(self):
         """Starts the simulation loop"""
@@ -114,8 +149,10 @@ class Simulation():
                         self.next_step()
                     elif event.key == pygame.K_SPACE:
                         self.run()
-                    elif event.key == pygame.K_t:
+                    elif event.key == pygame.K_t and not self._only_grid:
                         self.visual_training()
+                    elif event.key == pygame.K_w and not self._only_grid:
+                        self.agent.print_weights()
                     elif event.key == pygame.K_n:
                         self._new_run()
 
@@ -175,6 +212,11 @@ class Simulation():
             trace = self._points_to_coordinates(steps)
             if (len(trace) > 1):
                 pygame.draw.lines(self.screen, self._agent, False, trace, 5)
+
+        # If we have a greedy agent, stop here
+        if self._only_grid:
+            pygame.display.update()
+            return
 
         # Draw brain
         last = self._step >= len(self.agent.output_story)
@@ -284,10 +326,11 @@ class Simulation():
 
 
 def main():
-    agent = ReinforcementAgent(0.005, 0.99, 1)
+    # agent = EnhancedAgent(0.005, 0.99, 1)
+    agent = GreedyAgent()
     env = Flatland(10, 10)
     agent.new_environment(env)
-    agent.learn(50, False)
+    agent.run(50, False)
     simulation = Simulation(agent)
     simulation.start()
 
