@@ -78,25 +78,6 @@ class Agent():
         end = mov_reward == -100
         return (x, y), end
 
-    def move_back(self, direction):
-        """Moves the agent back from a certain cell, resetting the board.
-
-        This movements is not valid and should only be used when evaluating the
-        reinforced agent in order to obtain Q(s',a')
-        """
-        # Update the position of the agent in the environment
-        x = self.position[0] - direction[0]
-        y = self.position[1] - direction[1]
-        mov_reward = self.environment.move_agent(x, y)
-        # Update the rewards, position and direction value
-        self._r = mov_reward
-        self.reward += mov_reward
-        self.position = (x, y)
-        self.facing = direction
-        # Check if the agent just ran into a wall
-        end = mov_reward == -100
-        return (x, y), end
-
     def look_at(self, direction):
         """Return the value of the cell in a given direction"""
         return self.environment.get_cell(self.position[0] + direction[0],
@@ -229,6 +210,8 @@ class SupervisedAgent(Agent):
     neurons -- Array of binary neurons that represent the surroundings
     weights -- Dictionary containing each of the (i,j) connections
     outputs -- Triple containing the sum of input neurons and direction
+    neuron_story -- Array of snapshots of the neuron net, taken each step
+    output_story -- Array of snapshots of the output net, taken each step
     """
 
     # Dictionaries with the neuron input and output meanings
@@ -429,6 +412,7 @@ class ReinforcementAgent(SupervisedAgent):
         self.decay = decay
 
     def _update_weights(self, max_q, choice):
+        """Evaluate neurons and update the weights of the network"""
 
         if self._prev_neurons is not None:
             i = self._prev_out
@@ -451,6 +435,7 @@ class ReinforcementAgent(SupervisedAgent):
             print("Does this ever happen?")
 
     def _into_wall(self):
+        """Force the agent to learn when it runs into a wall"""
         i = self._prev_out
         for j in range(len(self.neurons)):
             input_n = self._prev_neurons[j]
@@ -546,14 +531,4 @@ class EnhancedAgent(ReinforcementAgent):
                         (right1, self.look_at(right1)),
                         (right2, self.look_at(right2)))
 
-        # print('I see {} in front, {} left, and {} right.'.format(
-        #     surroundings[0][1], surroundings[1][1], surroundings[2][1]))
-
         return surroundings
-
-
-if __name__ == '__main__':
-    agent = ReinforcementAgent(0.005, 0.99, 1)
-    # agent = GreedyAgent()
-    agent.train(50, False)
-    agent.print_weights()
