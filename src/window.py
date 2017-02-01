@@ -320,7 +320,10 @@ class Simulation():
         self.env = Flatland(10, 10)
         # agent.train(20, False)
         self.agent.new_environment(self.env)
-        self.agent.learn(50, False)
+        if isinstance(self.agent, GreedyAgent):
+            self.agent.run(50, False)
+        else:
+            self.agent.learn(50, False)
         self._step = 1
         self._draw_window()
 
