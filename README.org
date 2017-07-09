@@ -1,0 +1,40 @@
+#+TITLE:  Artificial Neural Networks visualization
+#+AUTHOR: Diego Vicente Martín
+#+EMAIL:  diegovicente@protonmail.com
+
+This code implements a simple Neural Network that can be run on a graphical
+environment using ~pygame~. This project implements 4 different agents: A
+greedy agent that follows simple rules (that can be used as baseline), an agent
+that learns by supervision of the greedy agent, an agent that learns by
+reinforcement, and a enhanced agent that learns by reinforcement but having
+more information about the surroundings.
+
+The simulation window also includes a graphical representation of the neurons
+and their synapses, that changes live accordingly to the game progress: a green
+synapse means a positive connection between the input neuron and the output
+neuron (that input triggers the output) and a red synapse mean a negative
+connection (the input inhibits the output).
+
+[[./img/input.png]]
+
+The simulation can be controlled using the arrow keys to move step by step, or
+using ~SPC~ to run a game automatically. By pressing ~n~ a new board is
+randomly generated and loaded. By pressing ~t~ a visual training can be
+performed: the agent rapidly executes a batch of games and shows the evolution
+of the brain to the user. Since the visualization can be confusing with certain
+values of the connections, ~w~ can be used to print the weights in the terminal
+that is running the simulation in text format.
+
+The ~src/~ folder contains all the source code. To run it, just do: ~python3
+src/run.py~ and you will be prompted with several options that were needed for
+the demo presentation. In the repository there is also a report that explained
+the details about the project as well as some study on the agents' learning and
+performance.
+
+[[./img/agents.png]]
+
+-----
+
+This code was presented as the Project 1 for the course Bio-Inspired Artificial
+Intelligence (IT3708) @ NTNU (Spring 2017).
+
