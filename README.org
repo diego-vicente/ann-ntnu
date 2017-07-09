@@ -15,7 +15,7 @@ synapse means a positive connection between the input neuron and the output
 neuron (that input triggers the output) and a red synapse mean a negative
 connection (the input inhibits the output).
 
-[[./img/input.png]]
+[[./report/img/input.png]]
 
 The simulation can be controlled using the arrow keys to move step by step, or
 using ~SPC~ to run a game automatically. By pressing ~n~ a new board is
@@ -31,7 +31,7 @@ the demo presentation. In the repository there is also a report that explained
 the details about the project as well as some study on the agents' learning and
 performance.
 
-[[./img/agents.png]]
+[[./report/img/agents.png]]
 
 -----
 
